@@ -1,0 +1,32 @@
+name: pomeka_v1
+description: "Pomeka Mühendislik Hesaplama Uygulaması"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- POMEKA Projesi İçin Gerekli Paketler ---
+  google_fonts: ^6.1.0
+  shared_preferences: ^2.2.2
+  fl_chart: ^0.66.0
+  pdf: ^3.10.4
+  printing: ^5.11.0
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  # --- Resimlerin Yolu ---
+  # Klasör yolu yerine direkt dosya adını verdim, bu hata vermez.
+  assets:
+    - assets/pomeka-png-1757403926.png
