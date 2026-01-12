@@ -1,0 +1,35 @@
+name: pomeka_v1
+description: Pomeka Mühendislik Hesaplama Uygulaması.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Design
+  cupertino_icons: ^1.0.6
+  google_fonts: ^7.0.0
+  fl_chart: ^1.1.1
+
+  # Local Storage
+  shared_preferences: ^2.5.4
+
+  # Document & Printing
+  pdf: ^3.11.3
+  printing: ^5.14.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Assets
+  assets:
+    - assets/pomeka-png-1757403926.png
