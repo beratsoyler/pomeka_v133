@@ -8,6 +8,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import 'kazan_tesisat_calculator.dart';
+import 'screens/formulas/formulas_home.dart';
+
 // ---------------------------------------------------------------------------
 // 1. MAIN ENTRY POINT & APP SETUP
 // ---------------------------------------------------------------------------
@@ -44,6 +47,9 @@ class _PomekaAppState extends State<PomekaApp> {
       themeMode: _themeMode,
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
+      routes: {
+        '/formulas': (_) => const FormulasHomeScreen(),
+      },
       home: AnimatedSwitcher(
         duration: const Duration(milliseconds: 1200),
         switchInCurve: Curves.easeInOut,
@@ -214,7 +220,7 @@ class AppLocale {
   static const Map<String, Map<String, String>> languages = {
     'TR': {
       'hydrofor': 'HİDROFOR TESİSATI',
-      'boiler': 'BOYLER KAPASİTESİ',
+      'boiler': 'KAZAN TESİSATI HESABI',
       'tank': 'GENLEŞME TANKI',
       'converter': 'BİRİM DÖNÜŞTÜRÜCÜ',
       'calculate': 'HESAPLA',
@@ -293,11 +299,64 @@ class AppLocale {
       'val_input': 'Değer Girin',
       'val_result': 'Sonuç',
       'Litre': 'Litre',
-      'Galon': 'Galon'
+      'Galon': 'Galon',
+      'zone_pool': 'Havuz Isıtma Yükü',
+      'zone_floor': 'Yerden Isıtma Yükü',
+      'zone_boiler': 'Boyler Yükü',
+      'zone_radiator': 'Radyatör Yükü',
+      'zone_hamam': 'Hamam Isıtma Yükü',
+      'zone_air_handler': 'Klima Santrali Yükü',
+      'zone_heat_recovery': 'Isı Geri Kazanım Yükü',
+      'heat_load_kcal': 'Isı Yükü',
+      'velocity': 'Hız',
+      'delta_t': 'ΔT',
+      'total_heat_load': 'Toplam Isı Yükü',
+      'boiler_capacity_kw': 'Kazan Kapasitesi (kW)',
+      'boiler_capacity_kcal': 'Kazan Kapasitesi (kcal/h)',
+      'total_flow': 'Toplam Debi',
+      'err_negative': 'Negatif değer girilemez.',
+      'err_delta_t': 'ΔT değeri 0 veya negatif olamaz.',
+      'err_velocity': 'Hız değeri 0 veya negatif olamaz.',
+      'boiler_capacity': 'Kazan Kapasitesi',
+      'zone_title': 'Zonlar',
+      'building_dims': 'Bina Ölçüleri',
+      'building_width': 'En',
+      'building_length': 'Boy',
+      'building_height': 'Yükseklik',
+      'system_type': 'Sistem Tipi',
+      'system_floor': 'YERDEN ISITMA',
+      'system_panel': 'PANEL RADYATÖR',
+      'system_steel': 'ÇELİK RADYATÖR',
+      'system_other': 'DİĞER',
+      'collector_velocity': 'Kollektör Hızı',
+      'zone_results': 'Zon Sonuçları',
+      'flow': 'Debi',
+      'pipe_diameter': 'Boru İç Çapı',
+      'collector_diameter': 'Kollektör Boru İç Çapı',
+      'expansion_tanks': 'Genleşme Tankları',
+      'open_tank': 'Açık Genleşme Tankı',
+      'closed_tank': 'Kapalı Genleşme Tankı',
+      'opening_pressure': 'Açma Basıncı',
+      'safety_pressure': 'Emniyet Basıncı',
+      'height_warning': 'Yükseklik değeri için kontrol gerekli.',
+      'check_height': 'KONTROL ET',
+      'expansion_details': 'Detaylar',
+      'system_volume': 'Sistem Su Hacmi',
+      'expansion_volume': 'Genleşme Hacmi',
+      'reserve_volume': 'Rezerv Hacim',
+      'static_pressure': 'Statik Basınç',
+      'formulas': 'Formüller',
+      'search_formulas': 'Formül ara (örn: Genleşme, Debi, Basınç…)',
+      'favorites': 'Favoriler',
+      'recent_formulas': 'Son Kullanılanlar',
+      'categories': 'Kategoriler',
+      'no_results': 'Sonuç bulunamadı',
+      'no_results_hint': 'Lütfen başka bir anahtar kelime deneyin.',
+      'detail_placeholder': 'Bu ekran yakında gerçek hesaplama modülüne dönüşecek.'
     },
     'EN': {
       'hydrofor': 'BOOSTER SYSTEM',
-      'boiler': 'BOILER CAPACITY',
+      'boiler': 'BOILER INSTALLATION',
       'tank': 'EXPANSION TANK',
       'converter': 'UNIT CONVERTER',
       'calculate': 'CALCULATE',
@@ -376,11 +435,64 @@ class AppLocale {
       'val_input': 'Enter Value',
       'val_result': 'Result',
       'Litre': 'Liter',
-      'Galon': 'Gallon'
+      'Galon': 'Gallon',
+      'zone_pool': 'Pool Heating Load',
+      'zone_floor': 'Floor Heating Load',
+      'zone_boiler': 'Boiler Load',
+      'zone_radiator': 'Radiator Load',
+      'zone_hamam': 'Hamam Heating Load',
+      'zone_air_handler': 'Air Handling Unit Load',
+      'zone_heat_recovery': 'Heat Recovery Load',
+      'heat_load_kcal': 'Heat Load',
+      'velocity': 'Velocity',
+      'delta_t': 'ΔT',
+      'total_heat_load': 'Total Heat Load',
+      'boiler_capacity_kw': 'Boiler Capacity (kW)',
+      'boiler_capacity_kcal': 'Boiler Capacity (kcal/h)',
+      'total_flow': 'Total Flow',
+      'err_negative': 'Negative values are not allowed.',
+      'err_delta_t': 'ΔT must be greater than 0.',
+      'err_velocity': 'Velocity must be greater than 0.',
+      'boiler_capacity': 'Boiler Capacity',
+      'zone_title': 'Zones',
+      'building_dims': 'Building Dimensions',
+      'building_width': 'Width',
+      'building_length': 'Length',
+      'building_height': 'Height',
+      'system_type': 'System Type',
+      'system_floor': 'FLOOR HEATING',
+      'system_panel': 'PANEL RADIATOR',
+      'system_steel': 'STEEL RADIATOR',
+      'system_other': 'OTHER',
+      'collector_velocity': 'Collector Velocity',
+      'zone_results': 'Zone Results',
+      'flow': 'Flow',
+      'pipe_diameter': 'Pipe Inner Diameter',
+      'collector_diameter': 'Collector Pipe Inner Diameter',
+      'expansion_tanks': 'Expansion Tanks',
+      'open_tank': 'Open Expansion Tank',
+      'closed_tank': 'Closed Expansion Tank',
+      'opening_pressure': 'Opening Pressure',
+      'safety_pressure': 'Safety Pressure',
+      'height_warning': 'Height value requires verification.',
+      'check_height': 'CHECK',
+      'expansion_details': 'Details',
+      'system_volume': 'System Water Volume',
+      'expansion_volume': 'Expansion Volume',
+      'reserve_volume': 'Reserve Volume',
+      'static_pressure': 'Static Pressure',
+      'formulas': 'Formulas',
+      'search_formulas': 'Search formulas (e.g., Expansion, Flow, Pressure…)',
+      'favorites': 'Favorites',
+      'recent_formulas': 'Recently Used',
+      'categories': 'Categories',
+      'no_results': 'No results found',
+      'no_results_hint': 'Try a different keyword.',
+      'detail_placeholder': 'This screen will become a full calculator soon.'
     },
     'DE': {
       'hydrofor': 'DRUCKERHÖHUNG',
-      'boiler': 'BOILERKAPAZITÄT',
+      'boiler': 'KESSELINSTALLATION',
       'tank': 'EXPANSIONSGEFÄSS',
       'converter': 'EINHEITENWANDLER',
       'calculate': 'BERECHNEN',
@@ -458,11 +570,64 @@ class AppLocale {
       'val_input': 'Wert eingeben',
       'val_result': 'Ergebnis',
       'Litre': 'Liter',
-      'Galon': 'Gallone'
+      'Galon': 'Gallone',
+      'zone_pool': 'Beckenheizlast',
+      'zone_floor': 'Fußbodenheizlast',
+      'zone_boiler': 'Boilerlast',
+      'zone_radiator': 'Heizkörperlast',
+      'zone_hamam': 'Hammam-Heizlast',
+      'zone_air_handler': 'RLT-Anlagenlast',
+      'zone_heat_recovery': 'Wärmerückgewinnung',
+      'heat_load_kcal': 'Heizlast',
+      'velocity': 'Geschwindigkeit',
+      'delta_t': 'ΔT',
+      'total_heat_load': 'Gesamt-Heizlast',
+      'boiler_capacity_kw': 'Kesselleistung (kW)',
+      'boiler_capacity_kcal': 'Kesselleistung (kcal/h)',
+      'total_flow': 'Gesamtdurchfluss',
+      'err_negative': 'Negative Werte sind nicht erlaubt.',
+      'err_delta_t': 'ΔT muss größer als 0 sein.',
+      'err_velocity': 'Geschwindigkeit muss größer als 0 sein.',
+      'boiler_capacity': 'Kesselleistung',
+      'zone_title': 'Zonen',
+      'building_dims': 'Gebäudemaße',
+      'building_width': 'Breite',
+      'building_length': 'Länge',
+      'building_height': 'Höhe',
+      'system_type': 'Systemtyp',
+      'system_floor': 'FUSSBODENHEIZUNG',
+      'system_panel': 'PLATTENHEIZKÖRPER',
+      'system_steel': 'STAHLHEIZKÖRPER',
+      'system_other': 'SONSTIGE',
+      'collector_velocity': 'Kollektorgeschwindigkeit',
+      'zone_results': 'Zonenergebnisse',
+      'flow': 'Durchfluss',
+      'pipe_diameter': 'Rohr-Innendurchmesser',
+      'collector_diameter': 'Kollektor-Rohr-Innendurchmesser',
+      'expansion_tanks': 'Ausdehnungsgefäße',
+      'open_tank': 'Offenes Ausdehnungsgefäß',
+      'closed_tank': 'Geschlossenes Ausdehnungsgefäß',
+      'opening_pressure': 'Öffnungsdruck',
+      'safety_pressure': 'Sicherheitsdruck',
+      'height_warning': 'Höhenwert muss geprüft werden.',
+      'check_height': 'PRÜFEN',
+      'expansion_details': 'Details',
+      'system_volume': 'Systemwasservolumen',
+      'expansion_volume': 'Ausdehnungsvolumen',
+      'reserve_volume': 'Reservevolumen',
+      'static_pressure': 'Statischer Druck',
+      'formulas': 'Formeln',
+      'search_formulas': 'Formel suchen (z.B. Ausdehnung, Durchfluss, Druck…)',
+      'favorites': 'Favoriten',
+      'recent_formulas': 'Zuletzt verwendet',
+      'categories': 'Kategorien',
+      'no_results': 'Keine Ergebnisse gefunden',
+      'no_results_hint': 'Bitte ein anderes Stichwort eingeben.',
+      'detail_placeholder': 'Dieser Bildschirm wird bald zu einem Rechner.'
     },
     'FR': {
       'hydrofor': 'SURPRESSION',
-      'boiler': 'CAPACITÉ BALLON',
+      'boiler': 'INSTALLATION DE CHAUDIÈRE',
       'tank': 'VASE D\'EXPANSION',
       'converter': 'CONVERTISSEUR',
       'calculate': 'CALCULER',
@@ -540,7 +705,62 @@ class AppLocale {
       'val_input': 'Entrer la valeur',
       'val_result': 'Résultat',
       'Litre': 'Litre',
-      'Galon': 'Gallon'
+      'Galon': 'Gallon',
+      'zone_pool': 'Charge chauffage piscine',
+      'zone_floor': 'Charge chauffage au sol',
+      'zone_boiler': 'Charge ballon',
+      'zone_radiator': 'Charge radiateur',
+      'zone_hamam': 'Charge hammam',
+      'zone_air_handler': 'Charge CTA',
+      'zone_heat_recovery': 'Charge récupération chaleur',
+      'heat_load_kcal': 'Charge thermique',
+      'velocity': 'Vitesse',
+      'delta_t': 'ΔT',
+      'total_heat_load': 'Charge totale',
+      'boiler_capacity_kw': 'Puissance chaudière (kW)',
+      'boiler_capacity_kcal': 'Puissance chaudière (kcal/h)',
+      'total_flow': 'Débit total',
+      'err_negative': 'Les valeurs négatives sont interdites.',
+      'err_delta_t': 'ΔT doit être supérieur à 0.',
+      'err_velocity': 'La vitesse doit être supérieure à 0.',
+      'boiler_capacity': 'Puissance chaudière',
+      'zone_title': 'Zones',
+      'building_dims': 'Dimensions du bâtiment',
+      'building_width': 'Largeur',
+      'building_length': 'Longueur',
+      'building_height': 'Hauteur',
+      'system_type': 'Type de système',
+      'system_floor': 'CHAUFFAGE AU SOL',
+      'system_panel': 'RADIATEUR PANNEAU',
+      'system_steel': 'RADIATEUR ACIER',
+      'system_other': 'AUTRE',
+      'collector_velocity': 'Vitesse du collecteur',
+      'zone_results': 'Résultats par zone',
+      'flow': 'Débit',
+      'pipe_diameter': 'Diamètre intérieur de tuyau',
+      'collector_diameter': 'Diamètre intérieur du collecteur',
+      'expansion_tanks': 'Vases d\'expansion',
+      'open_tank': 'Vase d\'expansion ouvert',
+      'closed_tank': 'Vase d\'expansion fermé',
+      'opening_pressure': 'Pression d\'ouverture',
+      'safety_pressure': 'Pression de sécurité',
+      'height_warning': 'La hauteur doit être vérifiée.',
+      'check_height': 'VÉRIFIER',
+      'expansion_details': 'Détails',
+      'system_volume': 'Volume d\'eau du système',
+      'expansion_volume': 'Volume d\'expansion',
+      'reserve_volume': 'Volume de réserve',
+      'static_pressure': 'Pression statique',
+      'formulas': 'Formules',
+      'search_formulas':
+          'Rechercher une formule (ex: Expansion, Débit, Pression…)',
+      'favorites': 'Favoris',
+      'recent_formulas': 'Récemment utilisés',
+      'categories': 'Catégories',
+      'no_results': 'Aucun résultat',
+      'no_results_hint': 'Essayez un autre mot-clé.',
+      'detail_placeholder':
+          'Cet écran deviendra bientôt un calculateur complet.'
     }
   };
 
@@ -1142,7 +1362,7 @@ class _HomeScreenState extends State<HomeScreen> {
             toTank: () => setState(() => _selectedToolIndex = 2));
         break;
       case 1:
-        body = const BoilerTab();
+        body = const BoilerInstallationTab();
         break;
       case 2:
         body = TankTab(q: _sharedQ, h: _sharedH);
@@ -1180,6 +1400,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(
                     child: Image.asset('assets/pomeka-png-1757403926.png',
                         height: 40))),
+            ListTile(
+              leading: const Icon(Icons.functions),
+              title: Text(AppLocale.t('formulas')),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/formulas');
+              },
+            ),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: TextField(
@@ -1746,6 +1974,623 @@ class BoilerTab extends StatefulWidget {
   const BoilerTab({super.key});
   @override
   State<BoilerTab> createState() => _BoilerTabState();
+}
+
+class BoilerInstallationTab extends StatefulWidget {
+  const BoilerInstallationTab({super.key});
+
+  @override
+  State<BoilerInstallationTab> createState() => _BoilerInstallationTabState();
+}
+
+class _BoilerInstallationTabState extends State<BoilerInstallationTab> {
+  final List<_BoilerZoneController> _zones = [];
+  final _widthCtrl = TextEditingController();
+  final _lengthCtrl = TextEditingController();
+  final _heightCtrl = TextEditingController();
+  final _collectorVelocityCtrl = TextEditingController(text: '0.7');
+  BoilerSystemType _systemType = BoilerSystemType.floorHeating;
+  BoilerInstallationResult? _result;
+
+  final List<_BoilerZoneDefinition> _definitions = const [
+    _BoilerZoneDefinition('zone_pool', 15, 0.7),
+    _BoilerZoneDefinition('zone_floor', 10, 0.7),
+    _BoilerZoneDefinition('zone_boiler', 20, 0.7),
+    _BoilerZoneDefinition('zone_radiator', 20, 0.7),
+    _BoilerZoneDefinition('zone_hamam', 10, 0.7),
+    _BoilerZoneDefinition('zone_air_handler', 15, 0.7),
+    _BoilerZoneDefinition('zone_heat_recovery', 15, 0.5),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    for (final def in _definitions) {
+      _zones.add(_BoilerZoneController(
+        labelKey: def.labelKey,
+        loadController: TextEditingController(),
+        deltaController: TextEditingController(text: def.defaultDeltaT.toString()),
+        velocityController:
+            TextEditingController(text: def.defaultVelocity.toString()),
+        defaultDeltaT: def.defaultDeltaT,
+        defaultVelocity: def.defaultVelocity,
+      ));
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final zone in _zones) {
+      zone.loadController.dispose();
+      zone.deltaController.dispose();
+      zone.velocityController.dispose();
+    }
+    _widthCtrl.dispose();
+    _lengthCtrl.dispose();
+    _heightCtrl.dispose();
+    _collectorVelocityCtrl.dispose();
+    super.dispose();
+  }
+
+  void _calculate() {
+    final inputs = <BoilerZoneInput>[];
+    final width = _parseDouble(_widthCtrl.text);
+    final length = _parseDouble(_lengthCtrl.text);
+    final height = _parseDouble(_heightCtrl.text);
+    final collectorVelocity = _parseDouble(_collectorVelocityCtrl.text);
+    if (height < 0) {
+      _showError(AppLocale.t('err_negative'));
+      return;
+    }
+    if (width < 0 || length < 0) {
+      _showError(AppLocale.t('err_negative'));
+      return;
+    }
+    if (collectorVelocity <= 0) {
+      _showError(AppLocale.t('err_velocity'));
+      return;
+    }
+    for (final zone in _zones) {
+      final load = _parseDouble(zone.loadController.text);
+      final deltaT = _parseDouble(zone.deltaController.text,
+          fallback: zone.defaultDeltaT);
+      final velocity = _parseDouble(zone.velocityController.text,
+          fallback: zone.defaultVelocity);
+      if (load < 0) {
+        _showError(AppLocale.t('err_negative'));
+        return;
+      }
+      if (deltaT <= 0) {
+        _showError(AppLocale.t('err_delta_t'));
+        return;
+      }
+      if (velocity <= 0) {
+        _showError(AppLocale.t('err_velocity'));
+        return;
+      }
+      inputs.add(BoilerZoneInput(
+        labelKey: zone.labelKey,
+        velocity: velocity,
+        loadKcalPerHour: load,
+        deltaT: deltaT,
+      ));
+    }
+
+    setState(() {
+      _result = BoilerInstallationCalculator.calculate(
+        zones: inputs,
+        collectorVelocity: collectorVelocity,
+        buildingHeight: height,
+        systemType: _systemType,
+      );
+    });
+  }
+
+  void _clear() {
+    for (final zone in _zones) {
+      zone.loadController.clear();
+      zone.deltaController.text = zone.defaultDeltaT.toString();
+      zone.velocityController.text = zone.defaultVelocity.toString();
+    }
+    _widthCtrl.clear();
+    _lengthCtrl.clear();
+    _heightCtrl.clear();
+    _collectorVelocityCtrl.text = '0.7';
+    _systemType = BoilerSystemType.floorHeating;
+    setState(() => _result = null);
+  }
+
+  double _parseDouble(String value, {double fallback = 0}) {
+    if (value.trim().isEmpty) {
+      return fallback;
+    }
+    return double.tryParse(value.replaceAll(',', '.')) ?? fallback;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          _sectionTitle(AppLocale.t('boiler_capacity')),
+          _BoilerCapacityCard(result: _result),
+          const SizedBox(height: 16),
+          _sectionTitle(AppLocale.t('zone_title')),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  for (final zone in _zones) ...[
+                    _BoilerZoneInputRow(zone: zone),
+                    const SizedBox(height: 14),
+                  ],
+                  const SizedBox(height: 10),
+                  _sectionTitle(AppLocale.t('building_dims')),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _widthCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            labelText: AppLocale.t('building_width'),
+                            suffixText: 'm',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _lengthCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            labelText: AppLocale.t('building_length'),
+                            suffixText: 'm',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: _heightCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            labelText: AppLocale.t('building_height'),
+                            suffixText: 'm',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('system_type'),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<BoilerSystemType>(
+                        value: _systemType,
+                        isExpanded: true,
+                        onChanged: (val) {
+                          if (val == null) return;
+                          setState(() => _systemType = val);
+                        },
+                        items: [
+                          BoilerSystemType.floorHeating,
+                          BoilerSystemType.panelRadiator,
+                          BoilerSystemType.steelRadiator,
+                          BoilerSystemType.other,
+                        ]
+                            .map(
+                              (type) => DropdownMenuItem(
+                                value: type,
+                                child: Text(_systemTypeLabel(type)),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _collectorVelocityCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('collector_velocity'),
+                      suffixText: 'm/s',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _clear,
+                          style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 52),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                          child: Text(AppLocale.t('clean')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _calculate,
+                          style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 52),
+                              backgroundColor: const Color(0xFF0052FF),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12))),
+                          child: Text(AppLocale.t('calculate')),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+          if (_result != null) ...[
+            const SizedBox(height: 20),
+            _BoilerResultCard(result: _result!),
+          ]
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      ),
+    );
+  }
+
+  String _systemTypeLabel(BoilerSystemType type) {
+    switch (type) {
+      case BoilerSystemType.floorHeating:
+        return AppLocale.t('system_floor');
+      case BoilerSystemType.panelRadiator:
+        return AppLocale.t('system_panel');
+      case BoilerSystemType.steelRadiator:
+        return AppLocale.t('system_steel');
+      case BoilerSystemType.other:
+        return AppLocale.t('system_other');
+    }
+  }
+}
+
+class _BoilerZoneDefinition {
+  final String labelKey;
+  final double defaultDeltaT;
+  final double defaultVelocity;
+
+  const _BoilerZoneDefinition(
+      this.labelKey, this.defaultDeltaT, this.defaultVelocity);
+}
+
+class _BoilerZoneController {
+  final String labelKey;
+  final TextEditingController loadController;
+  final TextEditingController deltaController;
+  final TextEditingController velocityController;
+  final double defaultDeltaT;
+  final double defaultVelocity;
+
+  _BoilerZoneController({
+    required this.labelKey,
+    required this.loadController,
+    required this.deltaController,
+    required this.velocityController,
+    required this.defaultDeltaT,
+    required this.defaultVelocity,
+  });
+}
+
+class _BoilerZoneInputRow extends StatelessWidget {
+  final _BoilerZoneController zone;
+
+  const _BoilerZoneInputRow({required this.zone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(AppLocale.t(zone.labelKey),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: zone.velocityController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: AppLocale.t('velocity'),
+                  suffixText: 'm/s',
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: zone.loadController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: AppLocale.t('heat_load_kcal'),
+                  suffixText: 'kcal/h',
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 1,
+              child: TextField(
+                controller: zone.deltaController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: AppLocale.t('delta_t'),
+                  suffixText: '°C',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _BoilerCapacityCard extends StatelessWidget {
+  final BoilerInstallationResult? result;
+
+  const _BoilerCapacityCard({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    if (result == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(AppLocale.t('no_data')),
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _BoilerResultRow(
+              label: AppLocale.t('total_heat_load'),
+              value: '${result!.totalLoadKcalPerHour.toStringAsFixed(0)} kcal/h',
+              isMain: true,
+            ),
+            _BoilerResultRow(
+              label: AppLocale.t('boiler_capacity_kw'),
+              value: '${result!.boilerCapacityKw} kW',
+            ),
+            _BoilerResultRow(
+              label: AppLocale.t('boiler_capacity_kcal'),
+              value:
+                  '${result!.boilerCapacityKcalPerHour.toStringAsFixed(0)} kcal/h',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BoilerResultCard extends StatelessWidget {
+  final BoilerInstallationResult result;
+
+  const _BoilerResultCard({required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF0052FF), width: 2),
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF0052FF).withValues(alpha: 0.05),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(AppLocale.t('zone_results')),
+          for (final zone in result.zones)
+            _BoilerZoneResultRow(
+              label: AppLocale.t(zone.labelKey),
+              flow: zone.flowM3PerHour,
+              diameter: zone.diameterMm,
+            ),
+          const Divider(height: 24),
+          _BoilerResultRow(
+            label: AppLocale.t('total_flow'),
+            value: '${result.totalFlowM3PerHour.toStringAsFixed(2)} m³/h',
+            isMain: true,
+          ),
+          _BoilerResultRow(
+            label: AppLocale.t('collector_diameter'),
+            value: '${result.collectorDiameterMm.toStringAsFixed(2)} mm',
+          ),
+          const Divider(height: 24),
+          _sectionHeader(AppLocale.t('expansion_tanks')),
+          _BoilerResultRow(
+            label: AppLocale.t('open_tank'),
+            value: '${result.expansion.openTankLiters.toStringAsFixed(0)} L',
+          ),
+          _BoilerResultRow(
+            label: AppLocale.t('closed_tank'),
+            value: result.expansion.closedTankLiters == null
+                ? AppLocale.t('check_height')
+                : '${result.expansion.closedTankLiters!.toStringAsFixed(0)} L',
+          ),
+          _BoilerResultRow(
+            label: AppLocale.t('opening_pressure'),
+            value: result.expansion.openingPressureBar == null
+                ? AppLocale.t('check_height')
+                : '${result.expansion.openingPressureBar!.toStringAsFixed(1)} bar',
+          ),
+          _BoilerResultRow(
+            label: AppLocale.t('safety_pressure'),
+            value: result.expansion.safetyPressureBar == null
+                ? AppLocale.t('check_height')
+                : '${result.expansion.safetyPressureBar!.toStringAsFixed(1)} bar',
+          ),
+          if (result.expansion.heightWarning)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                AppLocale.t('height_warning'),
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          const Divider(height: 24),
+          _sectionHeader(AppLocale.t('expansion_details')),
+          _BoilerResultRow(
+            label: AppLocale.t('system_volume'),
+            value: result.expansion.systemVolumeLiters == null
+                ? '-'
+                : '${result.expansion.systemVolumeLiters!.toStringAsFixed(1)} L',
+          ),
+          _BoilerResultRow(
+            label: AppLocale.t('expansion_volume'),
+            value: result.expansion.expansionVolumeLiters == null
+                ? '-'
+                : '${result.expansion.expansionVolumeLiters!.toStringAsFixed(1)} L',
+          ),
+          _BoilerResultRow(
+            label: AppLocale.t('reserve_volume'),
+            value: result.expansion.reserveVolumeLiters == null
+                ? '-'
+                : '${result.expansion.reserveVolumeLiters!.toStringAsFixed(1)} L',
+          ),
+          _BoilerResultRow(
+            label: AppLocale.t('static_pressure'),
+            value: result.expansion.staticPressureBar == null
+                ? '-'
+                : '${result.expansion.staticPressureBar!.toStringAsFixed(1)} bar',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+class _BoilerZoneResultRow extends StatelessWidget {
+  final String label;
+  final double flow;
+  final double diameter;
+
+  const _BoilerZoneResultRow({
+    required this.label,
+    required this.flow,
+    required this.diameter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${AppLocale.t('flow')}: ${flow.toStringAsFixed(2)} m³/h',
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  '${AppLocale.t('pipe_diameter')}: ${diameter.toStringAsFixed(2)} mm',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BoilerResultRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isMain;
+
+  const _BoilerResultRow({
+    required this.label,
+    required this.value,
+    this.isMain = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: isMain ? FontWeight.bold : FontWeight.w500,
+                color: isMain ? const Color(0xFF0052FF) : null,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isMain ? 16 : 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _BoilerTabState extends State<BoilerTab> {
