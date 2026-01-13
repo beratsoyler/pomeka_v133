@@ -908,7 +908,7 @@ class ResultChart extends StatelessWidget {
               ],
               lineTouchData: LineTouchData(
                 touchTooltipData: LineTouchTooltipData(
-                  tooltipBgColor: Colors.blueGrey,
+                  getTooltipColor: (_) => Colors.blueGrey,
                   getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                     return touchedBarSpots.map((barSpot) {
                       return LineTooltipItem(
@@ -1016,7 +1016,7 @@ class BoilerChart extends StatelessWidget {
                     ],
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
-                        tooltipBgColor: Colors.orangeAccent,
+                        getTooltipColor: (_) => Colors.orangeAccent,
                         getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                           return touchedBarSpots.map((barSpot) {
                             return LineTooltipItem(
@@ -1131,7 +1131,7 @@ class TankChart extends StatelessWidget {
                     ],
                     lineTouchData: LineTouchData(
                       touchTooltipData: LineTouchTooltipData(
-                        tooltipBgColor: Colors.purple,
+                        getTooltipColor: (_) => Colors.purple,
                         getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                           return touchedBarSpots.map((barSpot) {
                             return LineTooltipItem(
