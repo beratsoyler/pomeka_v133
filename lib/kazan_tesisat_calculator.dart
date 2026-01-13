@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import 'dart:math' as math;
 
 const double _pi = 3.14;
@@ -33,11 +34,23 @@ class BoilerZoneInput {
     required this.velocity,
     required this.deltaT,
     required this.loadKcalPerHour,
+=======
+class BoilerZoneInput {
+  final String labelKey;
+  final double loadKcalPerHour;
+  final double deltaT;
+
+  const BoilerZoneInput({
+    required this.labelKey,
+    required this.loadKcalPerHour,
+    required this.deltaT,
+>>>>>>> origin/master
   });
 }
 
 class BoilerZoneResult {
   final String labelKey;
+<<<<<<< HEAD
   final double velocity;
   final double deltaT;
   final double loadKcalPerHour;
@@ -75,6 +88,17 @@ class BoilerExpansionResult {
     required this.expansionVolumeLiters,
     required this.reserveVolumeLiters,
     required this.heightWarning,
+=======
+  final double loadKcalPerHour;
+  final double deltaT;
+  final double flowM3PerHour;
+
+  const BoilerZoneResult({
+    required this.labelKey,
+    required this.loadKcalPerHour,
+    required this.deltaT,
+    required this.flowM3PerHour,
+>>>>>>> origin/master
   });
 }
 
@@ -84,8 +108,11 @@ class BoilerInstallationResult {
   final double boilerCapacityKcalPerHour;
   final List<BoilerZoneResult> zones;
   final double totalFlowM3PerHour;
+<<<<<<< HEAD
   final double collectorDiameterMm;
   final BoilerExpansionResult expansion;
+=======
+>>>>>>> origin/master
 
   const BoilerInstallationResult({
     required this.totalLoadKcalPerHour,
@@ -93,22 +120,30 @@ class BoilerInstallationResult {
     required this.boilerCapacityKcalPerHour,
     required this.zones,
     required this.totalFlowM3PerHour,
+<<<<<<< HEAD
     required this.collectorDiameterMm,
     required this.expansion,
+=======
+>>>>>>> origin/master
   });
 }
 
 class BoilerInstallationCalculator {
+<<<<<<< HEAD
   static BoilerInstallationResult calculate({
     required List<BoilerZoneInput> zones,
     required double collectorVelocity,
     required double buildingHeight,
     required BoilerSystemType systemType,
   }) {
+=======
+  static BoilerInstallationResult calculate(List<BoilerZoneInput> zones) {
+>>>>>>> origin/master
     final zoneResults = zones.map((zone) {
       final flow = zone.deltaT > 0
           ? zone.loadKcalPerHour / (zone.deltaT * 1000)
           : 0.0;
+<<<<<<< HEAD
       final diameter =
           zone.velocity > 0 ? _diameterFromFlow(flow, zone.velocity) : 0.0;
       return BoilerZoneResult(
@@ -123,13 +158,28 @@ class BoilerInstallationCalculator {
 
     final totalLoad = zoneResults.fold<double>(
         0, (sum, zone) => sum + zone.loadKcalPerHour);
+=======
+      return BoilerZoneResult(
+        labelKey: zone.labelKey,
+        loadKcalPerHour: zone.loadKcalPerHour,
+        deltaT: zone.deltaT,
+        flowM3PerHour: flow,
+      );
+    }).toList();
+
+    final totalLoad =
+        zoneResults.fold<double>(0, (sum, zone) => sum + zone.loadKcalPerHour);
+>>>>>>> origin/master
     final boilerKw = totalLoad > 0 ? (totalLoad / 860).ceil() : 0;
     final boilerKcal = boilerKw * 860.0;
     final totalFlow =
         zoneResults.fold<double>(0, (sum, zone) => sum + zone.flowM3PerHour);
+<<<<<<< HEAD
     final collectorDiameter = collectorVelocity > 0
         ? _diameterFromFlow(totalFlow, collectorVelocity)
         : 0.0;
+=======
+>>>>>>> origin/master
 
     return BoilerInstallationResult(
       totalLoadKcalPerHour: totalLoad,
@@ -137,6 +187,7 @@ class BoilerInstallationCalculator {
       boilerCapacityKcalPerHour: boilerKcal,
       zones: zoneResults,
       totalFlowM3PerHour: totalFlow,
+<<<<<<< HEAD
       collectorDiameterMm: collectorDiameter,
       expansion: _calculateExpansion(
         boilerKw: boilerKw,
@@ -227,4 +278,8 @@ class BoilerInstallationCalculator {
     if (height < 45) return 5.5;
     return null;
   }
+=======
+    );
+  }
+>>>>>>> origin/master
 }
