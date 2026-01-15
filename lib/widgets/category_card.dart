@@ -43,11 +43,15 @@ class CategoryCard extends StatelessWidget {
               Text(
                 AppLocale.t(category.titleKey),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
               Text(
                 '$count ${AppLocale.t('formulas')}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               ),
             ],
