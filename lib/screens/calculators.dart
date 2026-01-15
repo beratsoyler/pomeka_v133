@@ -1004,7 +1004,7 @@ class _HydroforTabState extends State<HydroforTab> {
         const SizedBox(height: 20),
         if (widget.onTransferToTank != null)
           ElevatedButton(
-              onPressed: _handleTransfer,
+              onPressed: _hR == null ? null : _handleTransfer,
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0052FF),
                   foregroundColor: Colors.white,

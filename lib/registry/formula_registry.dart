@@ -48,9 +48,13 @@ class FormulaRegistry {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => TankTab(
-                  initialSystemHeightM: transfer.systemHeightM,
-                  initialFlowQ: transfer.flowRateQ,
+                builder: (_) => FormulaScreen(
+                  formulaId: 'tank',
+                  titleKey: 'tank',
+                  child: TankTab(
+                    initialSystemHeightM: transfer.systemHeightM,
+                    initialFlowQ: transfer.flowRateQ,
+                  ),
                 ),
               ),
             );
