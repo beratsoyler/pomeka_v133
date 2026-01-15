@@ -42,10 +42,18 @@ class FormulaRegistry {
         formulaId: 'hydrofor',
         titleKey: 'hydrofor',
         child: HydroforTab(
-          toTank: () {
+          onTransferToTank: (transfer) {
             final tank = FormulaRegistry.findById('tank');
             if (tank == null) return;
-            Navigator.push(context, MaterialPageRoute(builder: tank.builder));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TankTab(
+                  initialSystemHeightM: transfer.systemHeightM,
+                  initialFlowQ: transfer.flowRateQ,
+                ),
+              ),
+            );
           },
         ),
       ),

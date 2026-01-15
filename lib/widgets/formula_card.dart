@@ -59,11 +59,13 @@ class FormulaCard extends StatelessWidget {
                 child: Center(child: iconWidget),
               ),
               const SizedBox(height: 12),
-              Text(
-                AppLocale.t(formula.titleKey),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              Flexible(
+                child: Text(
+                  AppLocale.t(formula.titleKey),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           ),

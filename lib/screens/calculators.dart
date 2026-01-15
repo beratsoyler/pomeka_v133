@@ -11,6 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../kazan_tesisat_calculator.dart';
 import '../localization/app_locale.dart';
+import '../services/expansion_tank_calculator.dart';
+import '../services/hydrofor_tank_transfer.dart';
 
 // ---------------------------------------------------------------------------
 // 1. PDF SERVICE
@@ -762,8 +764,8 @@ class _UnitConverterTabState extends State<UnitConverterTab> {
 
 class HydroforTab extends StatefulWidget {
   final Function(String, String)? onRes;
-  final VoidCallback? toTank;
-  const HydroforTab({super.key, this.onRes, this.toTank});
+  final ValueChanged<HydroforTankTransfer>? onTransferToTank;
+  const HydroforTab({super.key, this.onRes, this.onTransferToTank});
   @override
   State<HydroforTab> createState() => _HydroforTabState();
 }
@@ -869,6 +871,42 @@ class _HydroforTabState extends State<HydroforTab> {
     await prefs.setStringList('calculation_history', h);
   }
 
+  double _parseDouble(String value) {
+    if (value.trim().isEmpty) {
+      return double.nan;
+    }
+    return double.tryParse(value.replaceAll(',', '.')) ?? double.nan;
+  }
+
+  void _handleTransfer() {
+    if (widget.onTransferToTank == null || _hR == null) {
+      return;
+    }
+
+    final systemHeight = _parseDouble(_hR!.split(' ').first);
+    if (systemHeight.isNaN) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocale.t('transfer_missing'))),
+      );
+      return;
+    }
+
+    final flowRate = _qR != null
+        ? _parseDouble(_qR!.split(' ').first)
+        : double.nan;
+
+    widget.onTransferToTank!(
+      HydroforTankTransfer(
+        systemHeightM: systemHeight,
+        flowRateQ: flowRate.isNaN ? null : flowRate,
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocale.t('transfer_success'))),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -964,9 +1002,9 @@ class _HydroforTabState extends State<HydroforTab> {
             hm: hVal,
             isDark: Theme.of(context).brightness == Brightness.dark),
         const SizedBox(height: 20),
-        if (widget.toTank != null)
+        if (widget.onTransferToTank != null)
           ElevatedButton(
-              onPressed: widget.toTank,
+              onPressed: _handleTransfer,
               style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0052FF),
                   foregroundColor: Colors.white,
@@ -1502,8 +1540,9 @@ class _BoilerTabState extends State<BoilerTab> {
 }
 
 class TankTab extends StatefulWidget {
-  final String? q, h;
-  const TankTab({super.key, this.q, this.h});
+  final double? initialSystemHeightM;
+  final double? initialFlowQ;
+  const TankTab({super.key, this.initialSystemHeightM, this.initialFlowQ});
   @override
   State<TankTab> createState() => _TankTabState();
 }
@@ -1511,99 +1550,87 @@ class TankTab extends StatefulWidget {
 class _TankTabState extends State<TankTab> {
   late TextEditingController _kwCtrl;
   late TextEditingController _hCtrl;
-  final _tfCtrl = TextEditingController(text: '80');
-  final _trCtrl = TextEditingController(text: '60');
-
-  double? _heaterFactor = 12.0;
-  double? _glycol = 0.0;
-
-  String? _resTank;
-  String? _resStatic, _resPreGas, _resSafety, _resExpVol, _resWaterVol;
-  double? _numericWaterVol, _numericMaxTemp;
+  final ExpansionTankCalculator _calculator = ExpansionTankCalculator();
+  HeaterTypeOption? _heaterType;
+  ExpansionTankResult? _result;
 
   @override
   void initState() {
     super.initState();
-    _kwCtrl = TextEditingController(text: widget.q);
-    String initialH =
-        widget.h != null ? (double.tryParse(widget.h!)! * 3).toString() : '';
-    _hCtrl = TextEditingController(text: initialH);
+    _kwCtrl = TextEditingController();
+    _hCtrl = TextEditingController(
+        text: widget.initialSystemHeightM != null
+            ? widget.initialSystemHeightM!.toStringAsFixed(2)
+            : '');
+    _heaterType = ExpansionTankCalculator.heaterTypes.first;
   }
 
   void _clear() {
     setState(() {
       _kwCtrl.clear();
       _hCtrl.clear();
-      _tfCtrl.text = '80';
-      _trCtrl.text = '60';
-      _heaterFactor = 12.0;
-      _glycol = 0.0;
-      _resTank = null;
-      _resStatic = null;
-      _resPreGas = null;
-      _resSafety = null;
-      _resExpVol = null;
-      _resWaterVol = null;
-      _numericWaterVol = null;
+      _heaterType = ExpansionTankCalculator.heaterTypes.first;
+      _result = null;
     });
   }
 
-  double _getExpansionCoef(double temp) {
-    double roCold = 999.0;
-    double roHot = 1000.0 - ((temp - 4) * (temp - 4) / 180.0);
-    double expansion = ((roCold / roHot) - 1) * 100;
-    return expansion > 0 ? expansion : 0.5;
+  double _parseDouble(String value) {
+    if (value.trim().isEmpty) {
+      return double.nan;
+    }
+    return double.tryParse(value.replaceAll(',', '.')) ?? double.nan;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   void _calc() async {
-    final kw = double.tryParse(_kwCtrl.text);
-    final h = double.tryParse(_hCtrl.text);
-    final tf = double.tryParse(_tfCtrl.text) ?? 80;
-    final tr = double.tryParse(_trCtrl.text) ?? 60;
+    final kw = _parseDouble(_kwCtrl.text);
+    final h = _parseDouble(_hCtrl.text);
+    final heaterType = _heaterType;
 
-    if (kw == null || h == null) return;
+    if (kw.isNaN || h.isNaN || heaterType == null) {
+      _showError(AppLocale.t('err_tank_invalid_input'));
+      return;
+    }
 
-    double vs = kw * _heaterFactor!;
-    double pst = h / 10.0;
-    double p0 = pst + 0.2;
-    double psv = pst + 1.5;
-    double pmax = psv;
+    try {
+      final result = _calculator.calculate(
+        capacityKw: kw,
+        systemHeightM: h,
+        heaterType: heaterType,
+      );
+      setState(() => _result = result);
 
-    double tm = (tf + tr) / 2;
-    double n = _getExpansionCoef(tm);
-    if (_glycol! > 0) n = n * 1.1;
-
-    double ve = vs * n / 100.0;
-
-    double vwr = vs * 0.005;
-    if (vwr < 3) vwr = 3;
-
-    double k = ((pmax + 1) - (p0 + 1)) / (pmax + 1);
-    if (k <= 0) k = 0.1;
-
-    double vt = (ve + vwr) / k;
-
-    setState(() {
-      _numericWaterVol = vs;
-      _numericMaxTemp = tf;
-
-      _resWaterVol = '${vs.toStringAsFixed(0)} L';
-      _resStatic = '${pst.toStringAsFixed(1)} Bar';
-      _resPreGas = '${p0.toStringAsFixed(1)} Bar';
-      _resSafety = '${psv.toStringAsFixed(1)} Bar';
-      _resExpVol = '${ve.toStringAsFixed(1)} L';
-      _resTank = '${vt.toStringAsFixed(1)} L';
-    });
-
-    final prefs = await SharedPreferences.getInstance();
-    final hist = prefs.getStringList('calculation_history') ?? [];
-    hist.add(jsonEncode({
-      'type': AppLocale.t('tank'),
-      'res': _resTank,
-      'time': DateTime.now().toString(),
-      'inputs': 'kW: $kw, H: $h m'
-    }));
-    await prefs.setStringList('calculation_history', hist);
+      final prefs = await SharedPreferences.getInstance();
+      final hist = prefs.getStringList('calculation_history') ?? [];
+      final recommendedText =
+          '${result.recommendedVolume.toStringAsFixed(0)} L';
+      hist.add(jsonEncode({
+        'type': AppLocale.t('tank'),
+        'res': recommendedText,
+        'time': DateTime.now().toString(),
+        'inputs':
+            'kW: $kw, H: $h m, ${AppLocale.t('heat_type')}: ${AppLocale.t(heaterType.labelKey)}'
+      }));
+      await prefs.setStringList('calculation_history', hist);
+    } on ExpansionTankCalculationException catch (e) {
+      setState(() => _result = null);
+      switch (e.error) {
+        case ExpansionTankCalculationError.invalidInput:
+          _showError(AppLocale.t('err_tank_invalid_input'));
+          break;
+        case ExpansionTankCalculationError.invalidPressureRange:
+          _showError(AppLocale.t('err_tank_invalid_pressure'));
+          break;
+        case ExpansionTankCalculationError.invalidResult:
+          _showError(AppLocale.t('err_tank_invalid_result'));
+          break;
+      }
+    }
   }
 
   @override
@@ -1611,6 +1638,22 @@ class _TankTabState extends State<TankTab> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(children: [
+        if (widget.initialFlowQ != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: Color(0xFF0052FF)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${AppLocale.t('transfer_flow')}: ${widget.initialFlowQ!.toStringAsFixed(2)} ${AppLocale.t('flow_unit')}',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Card(
             child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -1633,55 +1676,19 @@ class _TankTabState extends State<TankTab> {
                                 prefixIcon: const Icon(Icons.height)))),
                   ]),
                   const SizedBox(height: 16),
-                  Row(children: [
-                    Expanded(
-                        child: TextField(
-                            controller: _tfCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                                labelText: AppLocale.t('temp_f'),
-                                prefixIcon: const Icon(
-                                    Icons.thermostat_outlined,
-                                    color: Colors.red)))),
-                    const SizedBox(width: 16),
-                    Expanded(
-                        child: TextField(
-                            controller: _trCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                                labelText: AppLocale.t('temp_r'),
-                                prefixIcon: const Icon(
-                                    Icons.thermostat_outlined,
-                                    color: Colors.blue)))),
-                  ]),
-                  const SizedBox(height: 16),
                   DropdownButtonFormField<double>(
-                    initialValue: _heaterFactor,
+                    initialValue: _heaterType?.coefficient,
                     decoration: InputDecoration(
                         labelText: AppLocale.t('heat_type'),
                         prefixIcon: const Icon(Icons.whatshot)),
-                    onChanged: (v) => setState(() => _heaterFactor = v),
-                    items: [
-                      DropdownMenuItem(
-                          value: 12.0, child: Text(AppLocale.t('h_panel'))),
-                      DropdownMenuItem(
-                          value: 15.0, child: Text(AppLocale.t('h_cast'))),
-                      DropdownMenuItem(
-                          value: 20.0, child: Text(AppLocale.t('h_floor'))),
-                      DropdownMenuItem(
-                          value: 8.0, child: Text(AppLocale.t('h_fancoil'))),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<double>(
-                    initialValue: _glycol,
-                    decoration: InputDecoration(
-                        labelText: AppLocale.t('glycol'),
-                        prefixIcon: const Icon(Icons.ac_unit)),
-                    onChanged: (v) => setState(() => _glycol = v),
-                    items: [0.0, 10.0, 20.0, 30.0, 40.0, 50.0]
-                        .map((e) => DropdownMenuItem(
-                            value: e, child: Text('%${e.toInt()}')))
+                    onChanged: (value) => setState(() {
+                      _heaterType = ExpansionTankCalculator.heaterTypes
+                          .firstWhere((type) => type.coefficient == value);
+                    }),
+                    items: ExpansionTankCalculator.heaterTypes
+                        .map((type) => DropdownMenuItem(
+                            value: type.coefficient,
+                            child: Text(AppLocale.t(type.labelKey))))
                         .toList(),
                   ),
                   const SizedBox(height: 32),
@@ -1707,7 +1714,7 @@ class _TankTabState extends State<TankTab> {
                       child: Text(AppLocale.t('clean'),
                           style: const TextStyle(fontWeight: FontWeight.bold))),
                 ]))),
-        if (_resTank != null)
+        if (_result != null)
           Container(
               margin: const EdgeInsets.only(top: 24),
               padding: const EdgeInsets.all(24),
@@ -1715,20 +1722,40 @@ class _TankTabState extends State<TankTab> {
                   border: Border.all(color: const Color(0xFF0052FF), width: 2),
                   borderRadius: BorderRadius.circular(20)),
               child: Column(children: [
-                _resRow(AppLocale.t('tank_vol'), _resTank!, isMain: true),
+                _resRow(
+                    AppLocale.t('tank_required'),
+                    '${_result!.requiredVolume.toStringAsFixed(1)} L',
+                    isMain: true),
+                _resRow(
+                    AppLocale.t('tank_recommended'),
+                    '${_result!.recommendedVolume.toStringAsFixed(0)} L',
+                    isMain: true),
                 const Divider(),
-                _resRow(AppLocale.t('res_water_vol'), _resWaterVol!),
-                _resRow('${AppLocale.t('res_static')}:', _resStatic!),
-                _resRow('${AppLocale.t('res_pregas')}:', _resPreGas!),
-                _resRow('${AppLocale.t('res_safety')}:', _resSafety!),
-                _resRow('${AppLocale.t('res_exp_vol')}:', _resExpVol!),
-                const SizedBox(height: 24),
-                if (_numericWaterVol != null)
-                  TankChart(
-                      waterVolume: _numericWaterVol!,
-                      maxTemp: _numericMaxTemp!,
-                      isDark: Theme.of(context).brightness == Brightness.dark),
-                const SizedBox(height: 20),
+                ExpansionTile(
+                  title: Text(AppLocale.t('details')),
+                  children: [
+                    _resRow(
+                        AppLocale.t('res_water_vol'),
+                        '${_result!.systemVolume.toStringAsFixed(1)} L'),
+                    _resRow(
+                        AppLocale.t('res_exp_vol'),
+                        '${_result!.expansionVolume.toStringAsFixed(1)} L'),
+                    _resRow(
+                        AppLocale.t('res_reserve_vol'),
+                        '${_result!.reserveVolume.toStringAsFixed(1)} L'),
+                    _resRow(
+                        AppLocale.t('res_safety'),
+                        '${_result!.safetyValvePressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
+                    _resRow(
+                        AppLocale.t('res_max_pressure'),
+                        '${_result!.maxOperatingPressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
+                    _resRow(
+                        AppLocale.t('res_static'),
+                        '${_result!.staticPressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
                     icon: const Icon(Icons.picture_as_pdf),
                     label: Text(AppLocale.t('share_pdf')),
@@ -1736,9 +1763,14 @@ class _TankTabState extends State<TankTab> {
                         title: AppLocale.t('tank'),
                         data: {
                           AppLocale.t('heat_cap'): _kwCtrl.text,
-                          AppLocale.t('res_static'): _resStatic!,
-                          AppLocale.t('res_pregas'): _resPreGas!,
-                          AppLocale.t('tank_vol'): _resTank!
+                          AppLocale.t('res_static'):
+                              '${_result!.staticPressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+                          AppLocale.t('res_safety'):
+                              '${_result!.safetyValvePressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+                          AppLocale.t('tank_required'):
+                              '${_result!.requiredVolume.toStringAsFixed(1)} L',
+                          AppLocale.t('tank_recommended'):
+                              '${_result!.recommendedVolume.toStringAsFixed(0)} L'
                         }))
               ]))
       ]),
@@ -1751,14 +1783,18 @@ class _TankTabState extends State<TankTab> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(
-                  color: isMain ? const Color(0xFF0052FF) : Colors.grey,
-                  fontWeight: isMain ? FontWeight.w900 : FontWeight.normal,
-                  fontSize: isMain ? 20 : 14)),
+          Expanded(
+            child: Text(label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    color: isMain ? const Color(0xFF0052FF) : Colors.grey,
+                    fontWeight: isMain ? FontWeight.w900 : FontWeight.normal,
+                    fontSize: isMain ? 18 : 14)),
+          ),
+          const SizedBox(width: 8),
           Text(val,
               style: TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: isMain ? 24 : 16)),
+                  fontWeight: FontWeight.bold, fontSize: isMain ? 20 : 16)),
         ],
       ),
     );
