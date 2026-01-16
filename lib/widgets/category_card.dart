@@ -25,37 +25,59 @@ class CategoryCard extends StatelessWidget {
       child: Card(
         elevation: isDark ? 0 : 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(category.icon, color: color),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 150;
+            final padding = compact ? 12.0 : 16.0;
+            final iconSize = compact ? 40.0 : 48.0;
+            final titleStyle = TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: compact ? 13 : 14,
+            );
+            final subtitleStyle = TextStyle(
+              fontSize: compact ? 11 : 12,
+              color: Colors.grey[500],
+            );
+            final titleSpacing = compact ? 8.0 : 12.0;
+            final subtitleSpacing = compact ? 4.0 : 6.0;
+
+            return Padding(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: iconSize,
+                    height: iconSize,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(category.icon, color: color),
+                  ),
+                  SizedBox(height: titleSpacing),
+                  Flexible(
+                    child: Text(
+                      AppLocale.t(category.titleKey),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
+                      style: titleStyle,
+                    ),
+                  ),
+                  SizedBox(height: subtitleSpacing),
+                  Text(
+                    '$count ${AppLocale.t('formulas')}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: subtitleStyle,
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                AppLocale.t(category.titleKey),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '$count ${AppLocale.t('formulas')}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

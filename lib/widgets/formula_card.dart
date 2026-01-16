@@ -31,44 +31,65 @@ class FormulaCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: showFavoriteControl
-                    ? IconButton(
-                        icon: Icon(
-                          isFavorite ? Icons.star : Icons.star_border,
-                          color: isFavorite ? Colors.amber : Colors.grey,
-                        ),
-                        tooltip: AppLocale.t('favorite_formulas'),
-                        onPressed: onToggleFavorite,
-                      )
-                    : const SizedBox(height: 40),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 180;
+            final padding = compact ? 12.0 : 16.0;
+            final iconSize = compact ? 40.0 : 48.0;
+            final titleSpacing = compact ? 8.0 : 12.0;
+            final titleStyle = TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: compact ? 13 : 14,
+            );
+            final favoriteSize = compact ? 34.0 : 40.0;
+
+            return Padding(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: showFavoriteControl
+                        ? IconButton(
+                            constraints: BoxConstraints.tightFor(
+                              width: favoriteSize,
+                              height: favoriteSize,
+                            ),
+                            padding: EdgeInsets.zero,
+                            icon: Icon(
+                              isFavorite ? Icons.star : Icons.star_border,
+                              color: isFavorite ? Colors.amber : Colors.grey,
+                            ),
+                            tooltip: AppLocale.t('favorite_formulas'),
+                            onPressed: onToggleFavorite,
+                          )
+                        : SizedBox(height: favoriteSize),
+                  ),
+                  Container(
+                    width: iconSize,
+                    height: iconSize,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(child: iconWidget),
+                  ),
+                  SizedBox(height: titleSpacing),
+                  Flexible(
+                    child: Text(
+                      AppLocale.t(formula.titleKey),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
+                      style: titleStyle,
+                    ),
+                  ),
+                ],
               ),
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(child: iconWidget),
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: Text(
-                  AppLocale.t(formula.titleKey),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
