@@ -59,7 +59,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.95,
+              childAspectRatio: 0.85,
             ),
             itemCount: formulas.length,
             itemBuilder: (context, index) {

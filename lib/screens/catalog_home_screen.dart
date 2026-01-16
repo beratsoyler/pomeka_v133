@@ -212,7 +212,7 @@ class _CatalogHomeScreenState extends State<CatalogHomeScreen> {
                       crossAxisCount: crossAxisCount,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 1.1,
+                      childAspectRatio: 0.95,
                     ),
                     itemCount: categories.length,
                     itemBuilder: (context, index) {
@@ -284,7 +284,7 @@ class _FormulaGrid extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 0.95,
+            childAspectRatio: 0.85,
           ),
           itemCount: formulas.length,
           itemBuilder: (context, index) {
