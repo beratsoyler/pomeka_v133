@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../localization/app_locale.dart';
 import '../models/category_meta.dart';
+import 'responsive_title.dart';
 
 class CategoryCard extends StatelessWidget {
   final CategoryMeta category;
@@ -61,20 +62,20 @@ class CategoryCard extends StatelessWidget {
                   ),
                   SizedBox(height: titleSpacing),
                   Expanded(
-                    child: Text(
-                      AppLocale.t(category.titleKey),
+                    child: ResponsiveTitle(
+                      text: AppLocale.t(category.titleKey),
                       textAlign: TextAlign.center,
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
+                      minFontSize: 11,
                       style: titleStyle,
                     ),
                   ),
                   SizedBox(height: subtitleSpacing),
-                  Text(
-                    '$count ${AppLocale.t('formulas')}',
+                  ResponsiveTitle(
+                    text: '$count ${AppLocale.t('formulas')}',
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    minFontSize: 11,
+                    textAlign: TextAlign.center,
                     style: subtitleStyle,
                   ),
                 ],

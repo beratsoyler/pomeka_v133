@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../localization/app_locale.dart';
 import '../models/formula_meta.dart';
+import 'responsive_title.dart';
 
 class FormulaCard extends StatelessWidget {
   final FormulaMeta formula;
@@ -81,12 +82,12 @@ class FormulaCard extends StatelessWidget {
                   ),
                   SizedBox(height: titleSpacing),
                   Expanded(
-                    child: Text(
-                      AppLocale.t(formula.titleKey),
+                    child: ResponsiveTitle(
+                      text: AppLocale.t(formula.titleKey),
                       maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: true,
+                      minFontSize: 11,
                       style: titleStyle,
+                      textAlign: TextAlign.left,
                     ),
                   ),
                 ],

@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../kazan_tesisat_calculator.dart';
 import '../localization/app_locale.dart';
 import '../services/pump_expansion_calculator.dart';
+import '../widgets/responsive_title.dart';
 
 // ---------------------------------------------------------------------------
 // 1. PDF SERVICE
@@ -924,8 +925,12 @@ class _HydroforTabState extends State<HydroforTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text(AppLocale.t('calculate'),
-                          style: const TextStyle(fontWeight: FontWeight.bold))),
+                      child: ResponsiveTitle(
+                        text: AppLocale.t('calculate'),
+                        maxLines: 2,
+                        minFontSize: 11,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )),
                   const SizedBox(height: 16),
                   OutlinedButton(
                       onPressed: _clear,
@@ -935,8 +940,12 @@ class _HydroforTabState extends State<HydroforTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text(AppLocale.t('clean'),
-                          style: const TextStyle(fontWeight: FontWeight.bold))),
+                      child: ResponsiveTitle(
+                        text: AppLocale.t('clean'),
+                        maxLines: 2,
+                        minFontSize: 11,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )),
                 ]))),
         if (_load)
           const Padding(
@@ -980,13 +989,25 @@ class _HydroforTabState extends State<HydroforTab> {
                 children: [
                   const Icon(Icons.send_to_mobile),
                   const SizedBox(width: 8),
-                  Text(AppLocale.t('go_tank'))
+                  Flexible(
+                    child: ResponsiveTitle(
+                      text: AppLocale.t('go_tank'),
+                      maxLines: 2,
+                      minFontSize: 11,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
                 ],
               )),
         const SizedBox(height: 10),
         OutlinedButton.icon(
             icon: const Icon(Icons.picture_as_pdf),
-            label: Text(AppLocale.t('share_pdf')),
+            label: ResponsiveTitle(
+              text: AppLocale.t('share_pdf'),
+              maxLines: 1,
+              minFontSize: 11,
+              textAlign: TextAlign.left,
+            ),
             onPressed: () => PdfService.generateAndShare(
                 title: AppLocale.t('hydrofor'),
                 data: {
@@ -1138,7 +1159,11 @@ class _BoilerInstallationTabState extends State<BoilerInstallationTab> {
                               minimumSize: const Size(double.infinity, 52),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12))),
-                          child: Text(AppLocale.t('clean')),
+                          child: ResponsiveTitle(
+                            text: AppLocale.t('clean'),
+                            maxLines: 2,
+                            minFontSize: 11,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1152,7 +1177,11 @@ class _BoilerInstallationTabState extends State<BoilerInstallationTab> {
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12))),
-                          child: Text(AppLocale.t('calculate')),
+                          child: ResponsiveTitle(
+                            text: AppLocale.t('calculate'),
+                            maxLines: 2,
+                            minFontSize: 11,
+                          ),
                         ),
                       ),
                     ],
@@ -1202,8 +1231,13 @@ class _BoilerZoneInputRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(AppLocale.t(zone.labelKey),
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        ResponsiveTitle(
+          text: AppLocale.t(zone.labelKey),
+          textAlign: TextAlign.left,
+          maxLines: 2,
+          minFontSize: 11,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -1306,19 +1340,27 @@ class _BoilerResultRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              label,
+            child: ResponsiveTitle(
+              text: label,
+              textAlign: TextAlign.left,
+              maxLines: 2,
+              minFontSize: 11,
               style: TextStyle(
                 fontWeight: isMain ? FontWeight.bold : FontWeight.w500,
                 color: isMain ? const Color(0xFF0052FF) : null,
               ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: isMain ? 16 : 14,
+          Flexible(
+            child: ResponsiveTitle(
+              text: value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              minFontSize: 11,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: isMain ? 16 : 14,
+              ),
             ),
           ),
         ],
@@ -1431,8 +1473,12 @@ class _BoilerTabState extends State<BoilerTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text(AppLocale.t('calculate'),
-                          style: const TextStyle(fontWeight: FontWeight.bold))),
+                      child: ResponsiveTitle(
+                        text: AppLocale.t('calculate'),
+                        maxLines: 2,
+                        minFontSize: 11,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )),
                   const SizedBox(height: 16),
                   OutlinedButton(
                       onPressed: _clear,
@@ -1442,8 +1488,12 @@ class _BoilerTabState extends State<BoilerTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text(AppLocale.t('clean'),
-                          style: const TextStyle(fontWeight: FontWeight.bold))),
+                      child: ResponsiveTitle(
+                        text: AppLocale.t('clean'),
+                        maxLines: 2,
+                        minFontSize: 11,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )),
                 ]))),
         if (_load)
           const Padding(
@@ -1491,7 +1541,12 @@ class _BoilerTabState extends State<BoilerTab> {
                   const SizedBox(height: 20),
                   OutlinedButton.icon(
                       icon: const Icon(Icons.picture_as_pdf),
-                      label: Text(AppLocale.t('share_pdf')),
+                      label: ResponsiveTitle(
+                        text: AppLocale.t('share_pdf'),
+                        maxLines: 1,
+                        minFontSize: 11,
+                        textAlign: TextAlign.left,
+                      ),
                       onPressed: () => PdfService.generateAndShare(
                           title: AppLocale.t('boiler'),
                           data: {AppLocale.t('res_vol'): _res!}))
@@ -1679,8 +1734,12 @@ class _TankTabState extends State<TankTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text(AppLocale.t('calculate'),
-                          style: const TextStyle(fontWeight: FontWeight.bold))),
+                      child: ResponsiveTitle(
+                        text: AppLocale.t('calculate'),
+                        maxLines: 2,
+                        minFontSize: 11,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )),
                   const SizedBox(height: 16),
                   OutlinedButton(
                       onPressed: _clear,
@@ -1690,8 +1749,12 @@ class _TankTabState extends State<TankTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: Text(AppLocale.t('clean'),
-                          style: const TextStyle(fontWeight: FontWeight.bold))),
+                      child: ResponsiveTitle(
+                        text: AppLocale.t('clean'),
+                        maxLines: 2,
+                        minFontSize: 11,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      )),
                 ]))),
         if (_result != null)
           Container(
@@ -1715,7 +1778,12 @@ class _TankTabState extends State<TankTab> {
                     isMain: true),
                 const Divider(),
                 ExpansionTile(
-                  title: Text(AppLocale.t('details')),
+                  title: ResponsiveTitle(
+                    text: AppLocale.t('details'),
+                    maxLines: 2,
+                    minFontSize: 11,
+                    textAlign: TextAlign.left,
+                  ),
                   children: [
                     _resRow(
                         AppLocale.t('res_opening'),
@@ -1732,7 +1800,12 @@ class _TankTabState extends State<TankTab> {
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                     icon: const Icon(Icons.picture_as_pdf),
-                    label: Text(AppLocale.t('share_pdf')),
+                    label: ResponsiveTitle(
+                      text: AppLocale.t('share_pdf'),
+                      maxLines: 1,
+                      minFontSize: 11,
+                      textAlign: TextAlign.left,
+                    ),
                     onPressed: () => PdfService.generateAndShare(
                         title: AppLocale.t('tank'),
                         data: {
@@ -1762,20 +1835,30 @@ class _TankTabState extends State<TankTab> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    color: isMain ? const Color(0xFF0052FF) : Colors.grey,
-                    fontWeight: isMain ? FontWeight.w900 : FontWeight.normal,
-                    fontSize: isMain ? 18 : 14)),
+            child: ResponsiveTitle(
+              text: label,
+              textAlign: TextAlign.left,
+              maxLines: 2,
+              minFontSize: 11,
+              style: TextStyle(
+                  color: isMain ? const Color(0xFF0052FF) : Colors.grey,
+                  fontWeight: isMain ? FontWeight.w900 : FontWeight.normal,
+                  fontSize: isMain ? 18 : 14),
+            ),
           ),
           const SizedBox(width: 8),
-          Text(val,
+          Flexible(
+            child: ResponsiveTitle(
+              text: val,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              minFontSize: 11,
               style: TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: isMain ? 20 : 16)),
+                  fontWeight: FontWeight.bold, fontSize: isMain ? 20 : 16),
+            ),
+          ),
         ],
       ),
     );
@@ -1838,12 +1921,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(AppLocale.t('delete_confirm_title')),
-        content: Text(AppLocale.t('delete_confirm_msg')),
+        title: ResponsiveTitle(
+          text: AppLocale.t('delete_confirm_title'),
+          textAlign: TextAlign.left,
+          maxLines: 3,
+          minFontSize: 12,
+        ),
+        content: ResponsiveTitle(
+          text: AppLocale.t('delete_confirm_msg'),
+          textAlign: TextAlign.left,
+          maxLines: 4,
+          minFontSize: 12,
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text(AppLocale.t('cancel'))),
+              child: ResponsiveTitle(
+                text: AppLocale.t('cancel'),
+                maxLines: 1,
+                minFontSize: 11,
+              )),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -1856,8 +1953,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 });
               }
             },
-            child: Text(AppLocale.t('delete'),
-                style: const TextStyle(color: Colors.red)),
+            child: ResponsiveTitle(
+              text: AppLocale.t('delete'),
+              maxLines: 1,
+              minFontSize: 11,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -1887,7 +1988,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocale.t('history_title'), style: GoogleFonts.poppins()),
+        toolbarHeight: 72,
+        title: ResponsiveTitle(
+          text: AppLocale.t('history_title'),
+          maxLines: 2,
+          minFontSize: 12,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(),
+        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -1908,16 +2016,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
               onPressed: _exportSelected,
               backgroundColor: const Color(0xFF0052FF),
               icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-              label: Text(
-                '${AppLocale.t('export_selected')} (${_selectedIndices.length})',
+              label: ResponsiveTitle(
+                text:
+                    '${AppLocale.t('export_selected')} (${_selectedIndices.length})',
+                maxLines: 1,
+                minFontSize: 11,
                 style: const TextStyle(color: Colors.white),
               ),
             )
           : null,
       body: _history.isEmpty
           ? Center(
-              child: Text(AppLocale.t('no_data'),
-                  style: GoogleFonts.poppins(color: Colors.grey)))
+              child: ResponsiveTitle(
+                text: AppLocale.t('no_data'),
+                maxLines: 2,
+                minFontSize: 12,
+                style: GoogleFonts.poppins(color: Colors.grey),
+              ))
           : ListView.builder(
               padding: const EdgeInsets.only(
                   left: 16, right: 16, top: 16, bottom: 80),
@@ -1958,16 +2073,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                child: Text(item['type'] ?? 'Hesap',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0052FF))),
+                                child: ResponsiveTitle(
+                                  text: item['type'] ?? 'Hesap',
+                                  textAlign: TextAlign.left,
+                                  maxLines: 2,
+                                  minFontSize: 12,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0052FF)),
+                                ),
                               ),
                               Row(
                                 children: [
-                                  Text(dateStr,
+                                  Flexible(
+                                    child: ResponsiveTitle(
+                                      text: dateStr,
+                                      textAlign: TextAlign.right,
+                                      maxLines: 1,
+                                      minFontSize: 11,
                                       style: const TextStyle(
-                                          fontSize: 12, color: Colors.grey)),
+                                          fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ),
                                   const SizedBox(width: 8),
                                   Transform.scale(
                                     scale: 1.2,
@@ -1986,17 +2113,33 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ],
                           ),
                           const Divider(height: 24),
-                          Text('${AppLocale.t('inputs')}:',
+                          ResponsiveTitle(
+                              text: '${AppLocale.t('inputs')}:',
+                              textAlign: TextAlign.left,
+                              maxLines: 2,
+                              minFontSize: 11,
                               style: TextStyle(
                                   fontSize: 12, color: Colors.grey[600])),
-                          Text(inputs,
+                          ResponsiveTitle(
+                              text: inputs,
+                              textAlign: TextAlign.left,
+                              maxLines: 3,
+                              minFontSize: 11,
                               style:
                                   const TextStyle(fontWeight: FontWeight.w500)),
                           const SizedBox(height: 12),
-                          Text('${AppLocale.t('results')}:',
+                          ResponsiveTitle(
+                              text: '${AppLocale.t('results')}:',
+                              textAlign: TextAlign.left,
+                              maxLines: 2,
+                              minFontSize: 11,
                               style: TextStyle(
                                   fontSize: 12, color: Colors.grey[600])),
-                          Text(item['res'] ?? '---',
+                          ResponsiveTitle(
+                              text: item['res'] ?? '---',
+                              textAlign: TextAlign.left,
+                              maxLines: 3,
+                              minFontSize: 11,
                               style: const TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.bold)),
                         ],

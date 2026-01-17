@@ -5,6 +5,7 @@ import '../models/category_meta.dart';
 import '../registry/formula_registry.dart';
 import '../services/formula_storage.dart';
 import '../widgets/formula_card.dart';
+import '../widgets/responsive_title.dart';
 
 class CategoryScreen extends StatefulWidget {
   final CategoryMeta category;
@@ -48,7 +49,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final formulas = FormulaRegistry.formulasForCategory(widget.category.id);
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocale.t(widget.category.titleKey)),
+        toolbarHeight: 72,
+        title: ResponsiveTitle(
+          text: AppLocale.t(widget.category.titleKey),
+          maxLines: 2,
+          minFontSize: 12,
+          textAlign: TextAlign.center,
+        ),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -59,7 +66,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
+              childAspectRatio: 0.8,
             ),
             itemCount: formulas.length,
             itemBuilder: (context, index) {
