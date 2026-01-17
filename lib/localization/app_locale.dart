@@ -5,7 +5,7 @@ class AppLocale {
     'TR': {
       'hydrofor': 'HİDROFOR TESİSATI',
       'boiler': 'KAZAN TESİSATI HESABI',
-      'tank': 'GENLEŞME TANKI',
+      'tank': 'POMPA VE GENLEŞME TANKI',
       'converter': 'BİRİM DÖNÜŞTÜRÜCÜ',
       'calculate': 'HESAPLA',
       'clean': 'TEMİZLE',
@@ -32,6 +32,8 @@ class AppLocale {
       'tank_recommended': 'Önerilen Standart Tank',
       'heat_cap': 'Isıtıcı Kapasitesi (kW)',
       'sys_h': 'Sistem Yüksekliği (m)',
+      'building_width': 'Bina Eni (m)',
+      'building_length': 'Bina Boyu (m)',
       'temp_f': 'Gidiş Sıcaklığı (°C)',
       'temp_r': 'Dönüş Sıcaklığı (°C)',
       'heat_type': 'Isıtıcı Tipi',
@@ -39,6 +41,7 @@ class AppLocale {
       'res_static': 'Statik Basınç',
       'res_pregas': 'Ön Gaz Basıncı',
       'res_safety': 'Emniyet Ventili',
+      'res_opening': 'Açma Basıncı',
       'res_exp_vol': 'Genleşen Hacim',
       'res_reserve_vol': 'Rezerv Hacim',
       'res_max_pressure': 'Maksimum İşletme Basıncı',
@@ -53,6 +56,7 @@ class AppLocale {
       'err_tank_invalid_pressure':
           'Sistem yüksekliği çok fazla / basınç aralığı geçersiz.',
       'err_tank_invalid_result': 'Hesap geçersiz. Girdileri kontrol edin.',
+      'err_tank_height': 'Sistem yüksekliği 45m ve üzeri. KONTROL ET.',
       'err_boiler_500':
           'Çift Serpantin 500L altı olamaz. Lütfen Tek Serpantin seçiniz.',
       't_konut': 'Toplu Konutlar',
@@ -125,7 +129,7 @@ class AppLocale {
     'EN': {
       'hydrofor': 'BOOSTER SYSTEM',
       'boiler': 'BOILER INSTALLATION',
-      'tank': 'EXPANSION TANK',
+      'tank': 'PUMP & EXPANSION TANK',
       'converter': 'UNIT CONVERTER',
       'calculate': 'CALCULATE',
       'clean': 'CLEAR',
@@ -146,6 +150,8 @@ class AppLocale {
       'coil': 'Coil Type',
       'heat_cap': 'Heating Capacity (kW)',
       'sys_h': 'System Height (m)',
+      'building_width': 'Building Width (m)',
+      'building_length': 'Building Length (m)',
       'temp_f': 'Flow Temp (°C)',
       'temp_r': 'Return Temp (°C)',
       'heat_type': 'Heater Type',
@@ -153,6 +159,7 @@ class AppLocale {
       'res_static': 'Static Pressure',
       'res_pregas': 'Pre-Gas Pressure',
       'res_safety': 'Safety Valve',
+      'res_opening': 'Opening Pressure',
       'res_exp_vol': 'Expansion Vol',
       'res_reserve_vol': 'Reserve Volume',
       'res_max_pressure': 'Max Operating Pressure',
@@ -167,6 +174,7 @@ class AppLocale {
       'err_tank_invalid_pressure':
           'System height is too high / pressure range is invalid.',
       'err_tank_invalid_result': 'Calculation is invalid. Check inputs.',
+      'err_tank_height': 'System height is 45m or higher. Check it.',
       'err_boiler_500':
           'Double Coil cannot be under 500L. Please select Single Coil.',
       'res_flow': 'Flow (Q)',
@@ -245,7 +253,7 @@ class AppLocale {
     'DE': {
       'hydrofor': 'DRUCKERHÖHUNG',
       'boiler': 'KESSELINSTALLATION',
-      'tank': 'EXPANSIONSGEFÄSS',
+      'tank': 'PUMPE & EXPANSIONSGEFÄSS',
       'converter': 'EINHEITENWANDLER',
       'calculate': 'BERECHNEN',
       'clean': 'LÖSCHEN',
@@ -272,6 +280,8 @@ class AppLocale {
       'tank_recommended': 'Empfohlener Standardtank',
       'heat_cap': 'Heizleistung (kW)',
       'sys_h': 'Systemhöhe (m)',
+      'building_width': 'Gebäudebreite (m)',
+      'building_length': 'Gebäudelänge (m)',
       'temp_f': 'Vorlauf (°C)',
       'temp_r': 'Rücklauf (°C)',
       'heat_type': 'Heizungstyp',
@@ -279,6 +289,7 @@ class AppLocale {
       'res_static': 'Statischer Druck',
       'res_pregas': 'Vordruck',
       'res_safety': 'Sicherheitsventil',
+      'res_opening': 'Öffnungsdruck',
       'res_exp_vol': 'Expansionsvolumen',
       'res_reserve_vol': 'Reservevolumen',
       'res_max_pressure': 'Max. Betriebsdruck',
@@ -293,6 +304,7 @@ class AppLocale {
       'err_tank_invalid_pressure':
           'Systemhöhe zu hoch / Druckbereich ungültig.',
       'err_tank_invalid_result': 'Berechnung ungültig. Eingaben prüfen.',
+      'err_tank_height': 'Systemhöhe ist 45 m oder höher. Bitte prüfen.',
       'err_boiler_500': 'Doppelspule darf nicht unter 500L sein.',
       't_konut': 'Sozialwohnungen',
       'l_konut': 'Luxuswohnungen',
@@ -364,7 +376,7 @@ class AppLocale {
     'FR': {
       'hydrofor': 'SURPRESSION',
       'boiler': 'INSTALLATION DE CHAUDIÈRE',
-      'tank': 'VASE D\'EXPANSION',
+      'tank': 'POMPE & VASE D\'EXPANSION',
       'converter': 'CONVERTISSEUR',
       'calculate': 'CALCULER',
       'clean': 'EFFACER',
@@ -391,6 +403,8 @@ class AppLocale {
       'tank_recommended': 'Vase standard recommandé',
       'heat_cap': 'Puissance (kW)',
       'sys_h': 'Hauteur Système (m)',
+      'building_width': 'Largeur du bâtiment (m)',
+      'building_length': 'Longueur du bâtiment (m)',
       'temp_f': 'Temp. Départ (°C)',
       'temp_r': 'Temp. Retour (°C)',
       'heat_type': 'Type Chauffage',
@@ -398,6 +412,7 @@ class AppLocale {
       'res_static': 'Pression Statique',
       'res_pregas': 'Pression Pré-gonflage',
       'res_safety': 'Soupape de Sécurité',
+      'res_opening': 'Pression d\'ouverture',
       'res_exp_vol': 'Volume Expansion',
       'res_reserve_vol': 'Volume de réserve',
       'res_max_pressure': 'Pression max. de service',
@@ -412,6 +427,8 @@ class AppLocale {
       'err_tank_invalid_pressure':
           'Hauteur du système trop élevée / plage de pression invalide.',
       'err_tank_invalid_result': 'Calcul invalide. Vérifiez les entrées.',
+      'err_tank_height':
+          'La hauteur du système est de 45 m ou plus. Vérifiez.',
       'err_boiler_500':
           'Le double serpentin ne peut pas être inférieur à 500L.',
       't_konut': 'Logements Sociaux',

@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../kazan_tesisat_calculator.dart';
 import '../localization/app_locale.dart';
-import '../services/expansion_tank_calculator.dart';
+import '../services/pump_expansion_calculator.dart';
 
 // ---------------------------------------------------------------------------
 // 1. PDF SERVICE
@@ -1511,24 +1511,30 @@ class TankTab extends StatefulWidget {
 
 class _TankTabState extends State<TankTab> {
   late TextEditingController _kwCtrl;
-  late TextEditingController _hCtrl;
-  final ExpansionTankCalculator _calculator = ExpansionTankCalculator();
-  HeaterTypeOption? _heaterType;
-  ExpansionTankResult? _result;
+  late TextEditingController _widthCtrl;
+  late TextEditingController _lengthCtrl;
+  late TextEditingController _heightCtrl;
+  final PumpExpansionCalculator _calculator = PumpExpansionCalculator();
+  PumpExpansionHeatingType? _heatingType;
+  PumpExpansionResult? _result;
 
   @override
   void initState() {
     super.initState();
     _kwCtrl = TextEditingController(text: widget.q);
-    _hCtrl = TextEditingController(text: widget.h ?? '');
-    _heaterType = ExpansionTankCalculator.heaterTypes.first;
+    _widthCtrl = TextEditingController();
+    _lengthCtrl = TextEditingController();
+    _heightCtrl = TextEditingController(text: widget.h ?? '');
+    _heatingType = PumpExpansionCalculator.heatingTypes.first;
   }
 
   void _clear() {
     setState(() {
       _kwCtrl.clear();
-      _hCtrl.clear();
-      _heaterType = ExpansionTankCalculator.heaterTypes.first;
+      _widthCtrl.clear();
+      _lengthCtrl.clear();
+      _heightCtrl.clear();
+      _heatingType = PumpExpansionCalculator.heatingTypes.first;
       _result = null;
     });
   }
@@ -1548,10 +1554,16 @@ class _TankTabState extends State<TankTab> {
 
   void _calc() async {
     final kw = _parseDouble(_kwCtrl.text);
-    final h = _parseDouble(_hCtrl.text);
-    final heaterType = _heaterType;
+    final width = _parseDouble(_widthCtrl.text);
+    final length = _parseDouble(_lengthCtrl.text);
+    final height = _parseDouble(_heightCtrl.text);
+    final heatingType = _heatingType;
 
-    if (kw.isNaN || h.isNaN || heaterType == null) {
+    if (kw.isNaN ||
+        width.isNaN ||
+        length.isNaN ||
+        height.isNaN ||
+        heatingType == null) {
       _showError(AppLocale.t('err_tank_invalid_input'));
       return;
     }
@@ -1559,33 +1571,37 @@ class _TankTabState extends State<TankTab> {
     try {
       final result = _calculator.calculate(
         capacityKw: kw,
-        systemHeightM: h,
-        heaterType: heaterType,
+        buildingWidthM: width,
+        buildingLengthM: length,
+        systemHeightM: height,
+        heatingType: heatingType,
       );
       setState(() => _result = result);
 
       final prefs = await SharedPreferences.getInstance();
       final hist = prefs.getStringList('calculation_history') ?? [];
-      final recommendedText =
-          '${result.recommendedVolume.toStringAsFixed(0)} L';
+      final volumeText = '${result.tankVolumeLiter.toStringAsFixed(0)} L';
       hist.add(jsonEncode({
         'type': AppLocale.t('tank'),
-        'res': recommendedText,
+        'res': volumeText,
         'time': DateTime.now().toString(),
         'inputs':
-            'kW: $kw, H: $h m, ${AppLocale.t('heat_type')}: ${AppLocale.t(heaterType.labelKey)}'
+            'kW: $kw, W: $width m, L: $length m, H: $height m, ${AppLocale.t('heat_type')}: ${AppLocale.t(heatingType.labelKey)}'
       }));
       await prefs.setStringList('calculation_history', hist);
-    } on ExpansionTankCalculationException catch (e) {
+    } on PumpExpansionCalculationException catch (e) {
       setState(() => _result = null);
       switch (e.error) {
-        case ExpansionTankCalculationError.invalidInput:
+        case PumpExpansionCalculationError.invalidInput:
           _showError(AppLocale.t('err_tank_invalid_input'));
           break;
-        case ExpansionTankCalculationError.invalidPressureRange:
+        case PumpExpansionCalculationError.heightTooHigh:
+          _showError(AppLocale.t('err_tank_height'));
+          break;
+        case PumpExpansionCalculationError.invalidPressureRange:
           _showError(AppLocale.t('err_tank_invalid_pressure'));
           break;
-        case ExpansionTankCalculationError.invalidResult:
+        case PumpExpansionCalculationError.invalidResult:
           _showError(AppLocale.t('err_tank_invalid_result'));
           break;
       }
@@ -1612,25 +1628,45 @@ class _TankTabState extends State<TankTab> {
                     const SizedBox(width: 16),
                     Expanded(
                         child: TextField(
-                            controller: _hCtrl,
+                            controller: _heightCtrl,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                                 labelText: AppLocale.t('sys_h'),
                                 prefixIcon: const Icon(Icons.height)))),
                   ]),
                   const SizedBox(height: 16),
+                  Row(children: [
+                    Expanded(
+                        child: TextField(
+                            controller: _widthCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                                labelText: AppLocale.t('building_width'),
+                                prefixIcon:
+                                    const Icon(Icons.swap_horiz_outlined)))),
+                    const SizedBox(width: 16),
+                    Expanded(
+                        child: TextField(
+                            controller: _lengthCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(
+                                labelText: AppLocale.t('building_length'),
+                                prefixIcon:
+                                    const Icon(Icons.swap_vert_outlined)))),
+                  ]),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<double>(
-                    initialValue: _heaterType?.coefficient,
+                    initialValue: _heatingType?.volumeCoefficient,
                     decoration: InputDecoration(
                         labelText: AppLocale.t('heat_type'),
                         prefixIcon: const Icon(Icons.whatshot)),
                     onChanged: (value) => setState(() {
-                      _heaterType = ExpansionTankCalculator.heaterTypes
-                          .firstWhere((type) => type.coefficient == value);
+                      _heatingType = PumpExpansionCalculator.heatingTypes
+                          .firstWhere((type) => type.volumeCoefficient == value);
                     }),
-                    items: ExpansionTankCalculator.heaterTypes
+                    items: PumpExpansionCalculator.heatingTypes
                         .map((type) => DropdownMenuItem(
-                            value: type.coefficient,
+                            value: type.volumeCoefficient,
                             child: Text(AppLocale.t(type.labelKey))))
                         .toList(),
                   ),
@@ -1666,35 +1702,30 @@ class _TankTabState extends State<TankTab> {
                   borderRadius: BorderRadius.circular(20)),
               child: Column(children: [
                 _resRow(
-                    AppLocale.t('tank_required'),
-                    '${_result!.requiredVolume.toStringAsFixed(1)} L',
+                    AppLocale.t('res_flow'),
+                    '${_result!.flowM3PerHour.toStringAsFixed(2)} ${AppLocale.t('flow_unit')}',
                     isMain: true),
                 _resRow(
-                    AppLocale.t('tank_recommended'),
-                    '${_result!.recommendedVolume.toStringAsFixed(0)} L',
+                    AppLocale.t('res_press'),
+                    '${_result!.headMeter.toStringAsFixed(2)} ${AppLocale.t('press_unit')}',
+                    isMain: true),
+                _resRow(
+                    AppLocale.t('tank_vol'),
+                    '${_result!.tankVolumeLiter.toStringAsFixed(0)} L',
                     isMain: true),
                 const Divider(),
                 ExpansionTile(
                   title: Text(AppLocale.t('details')),
                   children: [
                     _resRow(
-                        AppLocale.t('res_water_vol'),
-                        '${_result!.systemVolume.toStringAsFixed(1)} L'),
-                    _resRow(
-                        AppLocale.t('res_exp_vol'),
-                        '${_result!.expansionVolume.toStringAsFixed(1)} L'),
-                    _resRow(
-                        AppLocale.t('res_reserve_vol'),
-                        '${_result!.reserveVolume.toStringAsFixed(1)} L'),
+                        AppLocale.t('res_opening'),
+                        '${_result!.openingPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
                     _resRow(
                         AppLocale.t('res_safety'),
-                        '${_result!.safetyValvePressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
-                    _resRow(
-                        AppLocale.t('res_max_pressure'),
-                        '${_result!.maxOperatingPressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
+                        '${_result!.safetyPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
                     _resRow(
                         AppLocale.t('res_static'),
-                        '${_result!.staticPressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
+                        '${_result!.staticPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}'),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -1706,14 +1737,21 @@ class _TankTabState extends State<TankTab> {
                         title: AppLocale.t('tank'),
                         data: {
                           AppLocale.t('heat_cap'): _kwCtrl.text,
-                          AppLocale.t('res_static'):
-                              '${_result!.staticPressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+                          AppLocale.t('building_width'): _widthCtrl.text,
+                          AppLocale.t('building_length'): _lengthCtrl.text,
+                          AppLocale.t('sys_h'): _heightCtrl.text,
+                          AppLocale.t('res_flow'):
+                              '${_result!.flowM3PerHour.toStringAsFixed(2)} ${AppLocale.t('flow_unit')}',
+                          AppLocale.t('res_press'):
+                              '${_result!.headMeter.toStringAsFixed(2)} ${AppLocale.t('press_unit')}',
+                          AppLocale.t('tank_vol'):
+                              '${_result!.tankVolumeLiter.toStringAsFixed(0)} L',
+                          AppLocale.t('res_opening'):
+                              '${_result!.openingPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
                           AppLocale.t('res_safety'):
-                              '${_result!.safetyValvePressure.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
-                          AppLocale.t('tank_required'):
-                              '${_result!.requiredVolume.toStringAsFixed(1)} L',
-                          AppLocale.t('tank_recommended'):
-                              '${_result!.recommendedVolume.toStringAsFixed(0)} L'
+                              '${_result!.safetyPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+                          AppLocale.t('res_static'):
+                              '${_result!.staticPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
                         }))
               ]))
       ]),
