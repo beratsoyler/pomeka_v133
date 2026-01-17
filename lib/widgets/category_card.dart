@@ -29,7 +29,7 @@ class CategoryCard extends StatelessWidget {
           builder: (context, constraints) {
             final compact = constraints.maxHeight < 150;
             final padding = compact ? 12.0 : 16.0;
-            final iconSize = compact ? 40.0 : 48.0;
+            final iconSize = compact ? 36.0 : 48.0;
             final titleStyle = TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: compact ? 13 : 14,
@@ -38,26 +38,29 @@ class CategoryCard extends StatelessWidget {
               fontSize: compact ? 11 : 12,
               color: Colors.grey[500],
             );
-            final titleSpacing = compact ? 8.0 : 12.0;
-            final subtitleSpacing = compact ? 4.0 : 6.0;
+            final titleSpacing = compact ? 6.0 : 12.0;
+            final subtitleSpacing = compact ? 3.0 : 6.0;
 
             return Padding(
               padding: EdgeInsets.all(padding),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: iconSize,
-                    height: iconSize,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Container(
+                      width: iconSize,
+                      height: iconSize,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(category.icon, color: color),
                     ),
-                    child: Icon(category.icon, color: color),
                   ),
                   SizedBox(height: titleSpacing),
-                  Flexible(
+                  Expanded(
                     child: Text(
                       AppLocale.t(category.titleKey),
                       textAlign: TextAlign.center,

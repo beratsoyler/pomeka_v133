@@ -35,18 +35,18 @@ class FormulaCard extends StatelessWidget {
           builder: (context, constraints) {
             final compact = constraints.maxHeight < 180;
             final padding = compact ? 12.0 : 16.0;
-            final iconSize = compact ? 40.0 : 48.0;
-            final titleSpacing = compact ? 8.0 : 12.0;
+            final iconSize = compact ? 36.0 : 48.0;
+            final titleSpacing = compact ? 6.0 : 12.0;
             final titleStyle = TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: compact ? 13 : 14,
             );
-            final favoriteSize = compact ? 34.0 : 40.0;
+            final favoriteSize = compact ? 32.0 : 40.0;
 
             return Padding(
               padding: EdgeInsets.all(padding),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Align(
@@ -67,17 +67,20 @@ class FormulaCard extends StatelessWidget {
                           )
                         : SizedBox(height: favoriteSize),
                   ),
-                  Container(
-                    width: iconSize,
-                    height: iconSize,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(14),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Container(
+                      width: iconSize,
+                      height: iconSize,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Center(child: iconWidget),
                     ),
-                    child: Center(child: iconWidget),
                   ),
                   SizedBox(height: titleSpacing),
-                  Flexible(
+                  Expanded(
                     child: Text(
                       AppLocale.t(formula.titleKey),
                       maxLines: 2,
