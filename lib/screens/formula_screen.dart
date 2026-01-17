@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../localization/app_locale.dart';
 import '../screens/calculators.dart';
 import '../services/formula_storage.dart';
+import '../widgets/scrollable_text.dart';
 
 class FormulaScreen extends StatefulWidget {
   final String formulaId;
@@ -47,7 +48,7 @@ class _FormulaScreenState extends State<FormulaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocale.t(widget.titleKey)),
+        title: ScrollableText(text: AppLocale.t(widget.titleKey)),
         actions: [
           IconButton(
             icon: const Icon(Icons.history),
