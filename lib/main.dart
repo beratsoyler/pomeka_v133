@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'screens/catalog_home_screen.dart';
+import 'state/app_state.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ class PomekaApp extends StatefulWidget {
 class _PomekaAppState extends State<PomekaApp> {
   ThemeMode _themeMode = ThemeMode.dark;
   bool _showSplash = true;
+  final AppState _appState = AppState();
 
   void _toggleTheme(bool isDark) {
     setState(() {
@@ -31,31 +33,40 @@ class _PomekaAppState extends State<PomekaApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'POMEKA',
-      themeMode: _themeMode,
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      home: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 1200),
-        switchInCurve: Curves.easeInOut,
-        switchOutCurve: Curves.easeInOut,
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        child: _showSplash
-            ? SplashScreen(
-                key: const ValueKey('Splash'),
-                onCompleted: () => setState(() => _showSplash = false),
-              )
-            : CatalogHomeScreen(
-                key: const ValueKey('CatalogHome'),
-                isDarkMode: _themeMode == ThemeMode.dark,
-                onThemeChanged: _toggleTheme,
-              ),
+    return AppStateScope(
+      notifier: _appState,
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'POMEKA',
+        themeMode: _themeMode,
+        theme: _buildTheme(Brightness.light),
+        darkTheme: _buildTheme(Brightness.dark),
+        home: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 1200),
+          switchInCurve: Curves.easeInOut,
+          switchOutCurve: Curves.easeInOut,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: _showSplash
+              ? SplashScreen(
+                  key: const ValueKey('Splash'),
+                  onCompleted: () => setState(() => _showSplash = false),
+                )
+              : CatalogHomeScreen(
+                  key: const ValueKey('CatalogHome'),
+                  isDarkMode: _themeMode == ThemeMode.dark,
+                  onThemeChanged: _toggleTheme,
+                ),
+        ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _appState.dispose();
+    super.dispose();
   }
 
   ThemeData _buildTheme(Brightness b) {

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../models/category_meta.dart';
 import '../models/formula_meta.dart';
+import '../localization/app_locale.dart';
 import '../screens/calculators.dart';
 import '../screens/formula_screen.dart';
+import '../state/app_state.dart';
 
 class FormulaRegistry {
   static const String categoryWater = 'water_systems';
@@ -42,9 +44,18 @@ class FormulaRegistry {
         formulaId: 'hydrofor',
         titleKey: 'hydrofor',
         child: HydroforTab(
-          toTank: () {
+          toTank: (transfer) {
             final tank = FormulaRegistry.findById('tank');
-            if (tank == null) return;
+            if (tank == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppLocale.t('transfer_target_missing'))),
+              );
+              return;
+            }
+            AppStateScope.of(context).setTransfer(transfer);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocale.t('transfer_success'))),
+            );
             Navigator.push(context, MaterialPageRoute(builder: tank.builder));
           },
         ),
