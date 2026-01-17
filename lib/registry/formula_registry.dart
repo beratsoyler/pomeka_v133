@@ -10,6 +10,7 @@ import '../state/app_state.dart';
 class FormulaRegistry {
   static const String categoryWater = 'water_systems';
   static const String categoryHeating = 'heating';
+  static const String categoryPumps = 'pump_calculations';
   static const String categoryUtilities = 'utilities';
 
   static const List<CategoryMeta> categories = [
@@ -26,10 +27,16 @@ class FormulaRegistry {
       sortOrder: 2,
     ),
     CategoryMeta(
+      id: categoryPumps,
+      titleKey: 'cat_pump_calculations',
+      icon: Icons.water_drop_outlined,
+      sortOrder: 3,
+    ),
+    CategoryMeta(
       id: categoryUtilities,
       titleKey: 'cat_utilities',
       icon: Icons.change_circle,
-      sortOrder: 3,
+      sortOrder: 4,
     ),
   ];
 
@@ -59,6 +66,30 @@ class FormulaRegistry {
             Navigator.push(context, MaterialPageRoute(builder: tank.builder));
           },
         ),
+      ),
+    ),
+    FormulaMeta(
+      id: 'recirculation_pump',
+      titleKey: 'recirculation_pump',
+      categoryId: categoryPumps,
+      icon: Icons.loop,
+      tags: const ['pump', 'recirculation', 'flow', 'heat'],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'recirculation_pump',
+        titleKey: 'recirculation_pump',
+        child: RecirculationPumpTab(),
+      ),
+    ),
+    FormulaMeta(
+      id: 'shunt_pump',
+      titleKey: 'shunt_pump',
+      categoryId: categoryPumps,
+      icon: Icons.rotate_left,
+      tags: const ['pump', 'shunt', 'flow', 'head'],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'shunt_pump',
+        titleKey: 'shunt_pump',
+        child: ShuntPumpTab(),
       ),
     ),
     FormulaMeta(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class FocusLabelTextField extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
+  final Widget? labelWidget;
   final TextInputType? keyboardType;
   final Widget? prefixIcon;
   final String? suffixText;
@@ -17,6 +18,7 @@ class FocusLabelTextField extends StatefulWidget {
     super.key,
     required this.controller,
     required this.labelText,
+    this.labelWidget,
     this.keyboardType,
     this.prefixIcon,
     this.suffixText,
@@ -189,11 +191,12 @@ class _FocusLabelTextFieldState extends State<FocusLabelTextField> {
         style: widget.style,
         maxLines: widget.maxLines,
         decoration: InputDecoration(
-          label: Text(
-            widget.labelText,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          label: widget.labelWidget ??
+              Text(
+                widget.labelText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
           prefixIcon: widget.prefixIcon,
           suffixText: widget.suffixText,
         ),

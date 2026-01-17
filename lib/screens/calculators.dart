@@ -16,6 +16,7 @@ import '../services/pump_expansion_calculator.dart';
 import '../state/app_state.dart';
 import '../widgets/focus_label_text_field.dart';
 import '../widgets/readable_text.dart';
+import '../widgets/tappable_label.dart';
 
 // ---------------------------------------------------------------------------
 // 1. PDF SERVICE
@@ -1911,6 +1912,513 @@ class _TankTabState extends State<TankTab> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class RecirculationPumpTab extends StatefulWidget {
+  const RecirculationPumpTab({super.key});
+
+  @override
+  State<RecirculationPumpTab> createState() => _RecirculationPumpTabState();
+}
+
+class _RecirculationPumpTabState extends State<RecirculationPumpTab> {
+  final TextEditingController _lbCtrl = TextEditingController();
+  final TextEditingController _loCtrl = TextEditingController();
+  double? _heatLossW;
+  double? _flowLh;
+  double? _flowM3h;
+
+  @override
+  void dispose() {
+    _lbCtrl.dispose();
+    _loCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clear() {
+    setState(() {
+      _lbCtrl.clear();
+      _loCtrl.clear();
+      _heatLossW = null;
+      _flowLh = null;
+      _flowM3h = null;
+    });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  double? _readInput(TextEditingController controller, String labelKey) {
+    final label = AppLocale.t(labelKey);
+    final text = controller.text.trim();
+    if (text.isEmpty) {
+      _showError('$label ${AppLocale.t('err_required')}');
+      return null;
+    }
+    final value = double.tryParse(text.replaceAll(',', '.'));
+    if (value == null) {
+      _showError('$label: ${AppLocale.t('err_invalid_number')}');
+      return null;
+    }
+    if (value < 0) {
+      _showError('$label: ${AppLocale.t('err_negative')}');
+      return null;
+    }
+    return value;
+  }
+
+  Future<void> _calculate() async {
+    // Test: Lb=120, Lo=80 => Qw=1880 W; Debi=783.33 L/h; Debi=0.78 m³/h
+    final lb = _readInput(_lbCtrl, 'recirc_lb');
+    if (lb == null) return;
+    final lo = _readInput(_loCtrl, 'recirc_lo');
+    if (lo == null) return;
+
+    final heatLossW = (lb * 11) + (lo * 7);
+    final flowLh = heatLossW / 2.4;
+    final flowM3h = flowLh / 1000;
+
+    setState(() {
+      _heatLossW = heatLossW;
+      _flowLh = flowLh;
+      _flowM3h = flowM3h;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final hist = prefs.getStringList('calculation_history') ?? [];
+    hist.add(jsonEncode({
+      'type': AppLocale.t('recirculation_pump'),
+      'res':
+          '${heatLossW.toStringAsFixed(2)} W / ${flowLh.toStringAsFixed(2)} L/h / ${flowM3h.toStringAsFixed(2)} m³/h',
+      'time': DateTime.now().toString(),
+      'inputs':
+          '${AppLocale.t('recirc_lb')}: ${lb.toStringAsFixed(2)} m, ${AppLocale.t('recirc_lo')}: ${lo.toStringAsFixed(2)} m',
+    }));
+    await prefs.setStringList('calculation_history', hist);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final resultVisible =
+        _heatLossW != null && _flowLh != null && _flowM3h != null;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  FocusLabelTextField(
+                    controller: _lbCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('recirc_lb'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('recirc_lb')),
+                    prefixIcon: const Icon(Icons.straighten),
+                    suffixText: 'm',
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _loCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('recirc_lo'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('recirc_lo')),
+                    prefixIcon: const Icon(Icons.timeline),
+                    suffixText: 'm',
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _clear,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('clean')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _calculate,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            backgroundColor: const Color(0xFF0052FF),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('calculate')),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (resultVisible) ...[
+            const SizedBox(height: 20),
+            _ResultCard(
+              rows: [
+                _ResultRow(
+                  label: AppLocale.t('recirc_heat_loss'),
+                  value: '${_heatLossW!.toStringAsFixed(2)} W',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('recirc_required_flow_lh'),
+                  value: '${_flowLh!.toStringAsFixed(2)} L/h',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('recirc_required_flow_m3h'),
+                  value: '${_flowM3h!.toStringAsFixed(2)} m³/h',
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class ShuntPumpTab extends StatefulWidget {
+  const ShuntPumpTab({super.key});
+
+  @override
+  State<ShuntPumpTab> createState() => _ShuntPumpTabState();
+}
+
+class _ShuntPumpTabState extends State<ShuntPumpTab> {
+  final TextEditingController _powerCtrl = TextEditingController();
+  final TextEditingController _widthCtrl = TextEditingController();
+  final TextEditingController _lengthCtrl = TextEditingController();
+  final TextEditingController _heightCtrl = TextEditingController();
+  _ShuntHeatingOption? _selectedType;
+  double? _flowM3h;
+  double? _headMss;
+
+  final List<_ShuntHeatingOption> _options = const [
+    _ShuntHeatingOption('h_floor', true),
+    _ShuntHeatingOption('h_panel', false),
+    _ShuntHeatingOption('h_steel', false),
+    _ShuntHeatingOption('h_cast', false),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedType = _options.first;
+  }
+
+  @override
+  void dispose() {
+    _powerCtrl.dispose();
+    _widthCtrl.dispose();
+    _lengthCtrl.dispose();
+    _heightCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clear() {
+    setState(() {
+      _powerCtrl.clear();
+      _widthCtrl.clear();
+      _lengthCtrl.clear();
+      _heightCtrl.clear();
+      _selectedType = _options.first;
+      _flowM3h = null;
+      _headMss = null;
+    });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  double? _readInput(TextEditingController controller, String labelKey) {
+    final label = AppLocale.t(labelKey);
+    final text = controller.text.trim();
+    if (text.isEmpty) {
+      _showError('$label ${AppLocale.t('err_required')}');
+      return null;
+    }
+    final value = double.tryParse(text.replaceAll(',', '.'));
+    if (value == null) {
+      _showError('$label: ${AppLocale.t('err_invalid_number')}');
+      return null;
+    }
+    if (value < 0) {
+      _showError('$label: ${AppLocale.t('err_negative')}');
+      return null;
+    }
+    return value;
+  }
+
+  Future<void> _calculate() async {
+    // Test: P=4.80, Tip=Yerden Isıtma, En=30, Boy=45, H=30 => Debi=0.41 m³/h; Basma=9.45 mSS
+    final power = _readInput(_powerCtrl, 'heat_cap');
+    if (power == null) return;
+    final width = _readInput(_widthCtrl, 'building_width');
+    if (width == null) return;
+    final length = _readInput(_lengthCtrl, 'building_length');
+    if (length == null) return;
+    final height = _readInput(_heightCtrl, 'sys_h');
+    if (height == null) return;
+    final heatingType = _selectedType;
+    if (heatingType == null) {
+      _showError(AppLocale.t('err_invalid_number'));
+      return;
+    }
+
+    final qKcalPerHour = power * 860;
+    final isFloor = heatingType.isFloorHeating;
+    final flowM3h = isFloor ? (qKcalPerHour / 10000) : (qKcalPerHour / 20000);
+    final totalLength = width + length + height;
+    final headMss = totalLength * (isFloor ? 0.09 : 0.04);
+
+    setState(() {
+      _flowM3h = flowM3h;
+      _headMss = headMss;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final hist = prefs.getStringList('calculation_history') ?? [];
+    hist.add(jsonEncode({
+      'type': AppLocale.t('shunt_pump'),
+      'res':
+          '${flowM3h.toStringAsFixed(2)} m³/h / ${headMss.toStringAsFixed(2)} mSS',
+      'time': DateTime.now().toString(),
+      'inputs':
+          '${AppLocale.t('heat_cap')}: ${power.toStringAsFixed(2)} kW, ${AppLocale.t('building_width')}: ${width.toStringAsFixed(2)} m, ${AppLocale.t('building_length')}: ${length.toStringAsFixed(2)} m, ${AppLocale.t('sys_h')}: ${height.toStringAsFixed(2)} m, ${AppLocale.t('heat_type')}: ${AppLocale.t(heatingType.labelKey)}',
+    }));
+    await prefs.setStringList('calculation_history', hist);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final resultVisible = _flowM3h != null && _headMss != null;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FocusLabelTextField(
+                          controller: _powerCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                                  decimal: true),
+                          labelText: AppLocale.t('heat_cap'),
+                          labelWidget:
+                              TappableLabel(text: AppLocale.t('heat_cap')),
+                          prefixIcon: const Icon(Icons.bolt),
+                          suffixText: 'kW',
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: FocusLabelTextField(
+                          controller: _heightCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                                  decimal: true),
+                          labelText: AppLocale.t('sys_h'),
+                          labelWidget:
+                              TappableLabel(text: AppLocale.t('sys_h')),
+                          prefixIcon: const Icon(Icons.height),
+                          suffixText: 'm',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FocusLabelTextField(
+                          controller: _widthCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                                  decimal: true),
+                          labelText: AppLocale.t('building_width'),
+                          labelWidget: TappableLabel(
+                              text: AppLocale.t('building_width')),
+                          prefixIcon: const Icon(Icons.swap_horiz),
+                          suffixText: 'm',
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: FocusLabelTextField(
+                          controller: _lengthCtrl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                                  decimal: true),
+                          labelText: AppLocale.t('building_length'),
+                          labelWidget: TappableLabel(
+                              text: AppLocale.t('building_length')),
+                          prefixIcon: const Icon(Icons.straighten),
+                          suffixText: 'm',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<_ShuntHeatingOption>(
+                    value: _selectedType,
+                    decoration: InputDecoration(
+                      label: TappableLabel(text: AppLocale.t('heat_type')),
+                      prefixIcon: const Icon(Icons.thermostat),
+                    ),
+                    onChanged: (value) =>
+                        setState(() => _selectedType = value),
+                    items: _options
+                        .map((option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(AppLocale.t(option.labelKey)),
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _clear,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('clean')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _calculate,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            backgroundColor: const Color(0xFF0052FF),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('calculate')),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (resultVisible) ...[
+            const SizedBox(height: 20),
+            _ResultCard(
+              rows: [
+                _ResultRow(
+                  label: AppLocale.t('shunt_flow'),
+                  value: '${_flowM3h!.toStringAsFixed(2)} m³/h',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('shunt_head'),
+                  value: '${_headMss!.toStringAsFixed(2)} mSS',
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ShuntHeatingOption {
+  final String labelKey;
+  final bool isFloorHeating;
+
+  const _ShuntHeatingOption(this.labelKey, this.isFloorHeating);
+}
+
+class _ResultCard extends StatelessWidget {
+  final List<_ResultRow> rows;
+
+  const _ResultCard({required this.rows});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF0052FF), width: 2),
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF0052FF).withValues(alpha: 0.05),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: rows
+            .expand((row) => [row, const SizedBox(height: 12)])
+            .toList()
+          ..removeLast(),
+      ),
+    );
+  }
+}
+
+class _ResultRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ResultRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final valueStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFF0052FF),
+        );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: TappableLabel(
+            text: label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(value, style: valueStyle),
+      ],
     );
   }
 }

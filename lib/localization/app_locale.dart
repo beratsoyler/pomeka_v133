@@ -8,6 +8,8 @@ class AppLocale {
       'boiler_expansion_tank': 'BOYLER GENLEŞME KABI HESABI',
       'tank': 'POMPA VE GENLEŞME TANKI',
       'converter': 'BİRİM DÖNÜŞTÜRÜCÜ',
+      'recirculation_pump': 'RE-SİRKÜLASYON POMPA SEÇİMİ',
+      'shunt_pump': 'ŞÖNT POMPA SEÇİMİ',
       'calculate': 'HESAPLA',
       'clean': 'TEMİZLE',
       'search_hint': 'Menüde Ara...',
@@ -139,7 +141,17 @@ class AppLocale {
       'err_delta_t': 'ΔT değeri 0 veya negatif olamaz.',
       'cat_water_systems': 'Su Sistemleri',
       'cat_heating': 'Isıtma Sistemleri',
-      'cat_utilities': 'Genel Araçlar'
+      'cat_utilities': 'Genel Araçlar',
+      'cat_pump_calculations': 'Pompa Hesapları',
+      'recirc_lb': 'Bodrum kat sıcak su + re-sirk hattı toplam uzunluğu',
+      'recirc_lo': 'Diğer katlar sıcak su + re-sirk hattı toplam uzunluğu',
+      'recirc_heat_loss': 'Isı kaybı (Qw)',
+      'recirc_required_flow_lh': 'Gerekli debi (L/h)',
+      'recirc_required_flow_m3h': 'Gerekli debi (m³/h)',
+      'shunt_flow': 'Pompa debisi',
+      'shunt_head': 'Pompa basma yüksekliği',
+      'err_required': 'değeri gerekli.',
+      'err_invalid_number': 'Geçerli sayı giriniz.'
     },
     'EN': {
       'hydrofor': 'BOOSTER SYSTEM',
@@ -147,6 +159,8 @@ class AppLocale {
       'boiler_expansion_tank': 'BOILER EXPANSION TANK',
       'tank': 'PUMP & EXPANSION TANK',
       'converter': 'UNIT CONVERTER',
+      'recirculation_pump': 'RECIRCULATION PUMP SELECTION',
+      'shunt_pump': 'SHUNT PUMP SELECTION',
       'calculate': 'CALCULATE',
       'clean': 'CLEAR',
       'search_hint': 'Search Menu...',
@@ -278,7 +292,19 @@ class AppLocale {
       'err_delta_t': 'ΔT must be greater than 0.',
       'cat_water_systems': 'Water Systems',
       'cat_heating': 'Heating Systems',
-      'cat_utilities': 'Utilities'
+      'cat_utilities': 'Utilities',
+      'cat_pump_calculations': 'Pump Calculations',
+      'recirc_lb':
+          'Basement hot water + recirculation line total length',
+      'recirc_lo':
+          'Other floors hot water + recirculation line total length',
+      'recirc_heat_loss': 'Heat loss (Qw)',
+      'recirc_required_flow_lh': 'Required flow (L/h)',
+      'recirc_required_flow_m3h': 'Required flow (m³/h)',
+      'shunt_flow': 'Pump flow',
+      'shunt_head': 'Pump head',
+      'err_required': 'is required.',
+      'err_invalid_number': 'Enter a valid number.'
     },
     'DE': {
       'hydrofor': 'DRUCKERHÖHUNG',
@@ -286,6 +312,8 @@ class AppLocale {
       'boiler_expansion_tank': 'BOILER-AUSDEHNUNGSGEFÄSS',
       'tank': 'PUMPE & EXPANSIONSGEFÄSS',
       'converter': 'EINHEITENWANDLER',
+      'recirculation_pump': 'REZIRKULATIONSPUMPENAUSWAHL',
+      'shunt_pump': 'SHUNTPUMPENAUSWAHL',
       'calculate': 'BERECHNEN',
       'clean': 'LÖSCHEN',
       'search_hint': 'Suchen...',
@@ -417,7 +445,19 @@ class AppLocale {
       'err_delta_t': 'ΔT muss größer als 0 sein.',
       'cat_water_systems': 'Wassersysteme',
       'cat_heating': 'Heizsysteme',
-      'cat_utilities': 'Hilfsprogramme'
+      'cat_utilities': 'Hilfsprogramme',
+      'cat_pump_calculations': 'Pumpenberechnungen',
+      'recirc_lb':
+          'Gesamtlänge Warmwasser + Rezirkulationsleitung im Keller',
+      'recirc_lo':
+          'Gesamtlänge Warmwasser + Rezirkulationsleitung in anderen Etagen',
+      'recirc_heat_loss': 'Wärmeverlust (Qw)',
+      'recirc_required_flow_lh': 'Erforderlicher Durchfluss (L/h)',
+      'recirc_required_flow_m3h': 'Erforderlicher Durchfluss (m³/h)',
+      'shunt_flow': 'Pumpendurchfluss',
+      'shunt_head': 'Pumpenförderhöhe',
+      'err_required': 'ist erforderlich.',
+      'err_invalid_number': 'Bitte eine gültige Zahl eingeben.'
     },
     'FR': {
       'hydrofor': 'SURPRESSION',
@@ -425,6 +465,8 @@ class AppLocale {
       'boiler_expansion_tank': 'VASE D’EXPANSION DU BALLON',
       'tank': 'POMPE & VASE D\'EXPANSION',
       'converter': 'CONVERTISSEUR',
+      'recirculation_pump': 'SÉLECTION DE POMPE DE RE-CIRCULATION',
+      'shunt_pump': 'SÉLECTION DE POMPE SHUNT',
       'calculate': 'CALCULER',
       'clean': 'EFFACER',
       'search_hint': 'Rechercher...',
@@ -557,7 +599,19 @@ class AppLocale {
       'err_delta_t': 'ΔT doit être supérieur à 0.',
       'cat_water_systems': 'Systèmes d\'eau',
       'cat_heating': 'Systèmes de chauffage',
-      'cat_utilities': 'Utilitaires'
+      'cat_utilities': 'Utilitaires',
+      'cat_pump_calculations': 'Calculs de pompe',
+      'recirc_lb':
+          'Longueur totale ECS + boucle de recirculation du sous-sol',
+      'recirc_lo':
+          'Longueur totale ECS + boucle de recirculation des autres étages',
+      'recirc_heat_loss': 'Perte de chaleur (Qw)',
+      'recirc_required_flow_lh': 'Débit requis (L/h)',
+      'recirc_required_flow_m3h': 'Débit requis (m³/h)',
+      'shunt_flow': 'Débit de pompe',
+      'shunt_head': 'Hauteur manométrique de pompe',
+      'err_required': 'est requis.',
+      'err_invalid_number': 'Veuillez saisir un nombre valide.'
     }
   };
 
