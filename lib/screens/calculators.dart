@@ -1917,6 +1917,239 @@ class _TankTabState extends State<TankTab> {
   }
 }
 
+class BoilerExpansionTankTab extends StatefulWidget {
+  const BoilerExpansionTankTab({super.key});
+
+  @override
+  State<BoilerExpansionTankTab> createState() => _BoilerExpansionTankTabState();
+}
+
+class _BoilerExpansionTankTabState extends State<BoilerExpansionTankTab> {
+  late TextEditingController _volumeCtrl;
+  late TextEditingController _minPressureCtrl;
+  late TextEditingController _maxPressureCtrl;
+  double? _result;
+  double? _expansionWater;
+
+  @override
+  void initState() {
+    super.initState();
+    _volumeCtrl = TextEditingController();
+    _minPressureCtrl = TextEditingController();
+    _maxPressureCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _volumeCtrl.dispose();
+    _minPressureCtrl.dispose();
+    _maxPressureCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clear() {
+    setState(() {
+      _volumeCtrl.clear();
+      _minPressureCtrl.clear();
+      _maxPressureCtrl.clear();
+      _result = null;
+      _expansionWater = null;
+    });
+  }
+
+  double _parseDouble(String value) {
+    if (value.trim().isEmpty) {
+      return double.nan;
+    }
+    return double.tryParse(value.replaceAll(',', '.')) ?? double.nan;
+  }
+
+  String _formatNumber(double value) {
+    final formatted = value.toStringAsFixed(1);
+    return AppLocale.currentLang == 'TR'
+        ? formatted.replaceAll('.', ',')
+        : formatted;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _calc() async {
+    final volume = _parseDouble(_volumeCtrl.text);
+    final pMin = _parseDouble(_minPressureCtrl.text);
+    final pMax = _parseDouble(_maxPressureCtrl.text);
+
+    if (volume.isNaN || pMin.isNaN || pMax.isNaN) {
+      _showError(AppLocale.t('err_boiler_expansion_invalid_input'));
+      return;
+    }
+    if (volume <= 0) {
+      _showError(AppLocale.t('err_boiler_expansion_invalid_volume'));
+      return;
+    }
+    if (pMax <= pMin) {
+      _showError(AppLocale.t('err_boiler_expansion_invalid_pressure'));
+      return;
+    }
+
+    // TEST KONTROL: Vb=2000, Pmin=5, Pmax=8 -> Vexp=43.4, Vt=130.2
+    final vExp = 0.0217 * volume;
+    final vTank = vExp * (pMax + 1) / (pMax - pMin);
+
+    setState(() {
+      _expansionWater = vExp;
+      _result = vTank;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final history = prefs.getStringList('calculation_history') ?? [];
+    history.add(jsonEncode({
+      'type': AppLocale.t('boiler_expansion_tank'),
+      'res': '${_formatNumber(vTank)} L',
+      'time': DateTime.now().toString(),
+      'inputs': 'Vb: $volume L, Pmin: $pMin bar, Pmax: $pMax bar',
+    }));
+    await prefs.setStringList('calculation_history', history);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _volumeCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('boiler_expansion_volume'),
+                      prefixIcon: const Icon(Icons.storage),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _minPressureCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('boiler_expansion_pmin'),
+                      prefixIcon: const Icon(Icons.arrow_downward),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _maxPressureCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('boiler_expansion_pmax'),
+                      prefixIcon: const Icon(Icons.arrow_upward),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: _calc,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0052FF),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 60),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: ReadableText(
+                      text: AppLocale.t('calculate'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton(
+                    onPressed: _clear,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.red),
+                      foregroundColor: Colors.red,
+                      minimumSize: const Size(double.infinity, 60),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: ReadableText(
+                      text: AppLocale.t('clean'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_result != null)
+            Container(
+              margin: const EdgeInsets.only(top: 24),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF0052FF), width: 2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _resultRow(
+                    AppLocale.t('boiler_expansion_result'),
+                    '${_formatNumber(_result!)} L',
+                  ),
+                  if (_expansionWater != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '${AppLocale.t('boiler_expansion_water')}: ${_formatNumber(_expansionWater!)} L',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.grey),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _resultRow(String label, String value) {
+    return Row(
+      children: [
+        Expanded(
+          child: ReadableText(
+            text: label,
+            style: const TextStyle(
+              color: Color(0xFF0052FF),
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: ReadableText(
+            text: value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
   @override

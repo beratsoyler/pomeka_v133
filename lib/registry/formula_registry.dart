@@ -86,6 +86,18 @@ class FormulaRegistry {
       ),
     ),
     FormulaMeta(
+      id: 'boiler_expansion_tank',
+      titleKey: 'boiler_expansion_tank',
+      categoryId: categoryHeating,
+      icon: Icons.storage,
+      tags: const ['boiler', 'expansion', 'tank', 'pressure'],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'boiler_expansion_tank',
+        titleKey: 'boiler_expansion_tank',
+        child: BoilerExpansionTankTab(),
+      ),
+    ),
+    FormulaMeta(
       id: 'unit_converter',
       titleKey: 'converter',
       categoryId: categoryUtilities,
