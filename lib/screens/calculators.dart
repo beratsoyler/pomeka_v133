@@ -11,7 +11,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../kazan_tesisat_calculator.dart';
 import '../localization/app_locale.dart';
+import '../models/formula_transfer_data.dart';
 import '../services/pump_expansion_calculator.dart';
+import '../state/app_state.dart';
 import '../widgets/readable_text.dart';
 
 // ---------------------------------------------------------------------------
@@ -762,9 +764,49 @@ class _UnitConverterTabState extends State<UnitConverterTab> {
   }
 }
 
+Map<String, dynamic> buildTransferFromHydrofor({
+  required double? flowM3h,
+  required double? headMeter,
+}) {
+  final data = <String, dynamic>{};
+  if (flowM3h != null && flowM3h.isFinite) {
+    data['flow_m3h'] = flowM3h;
+  }
+  if (headMeter != null && headMeter.isFinite) {
+    data['head_m'] = headMeter;
+  }
+  return data;
+}
+
+bool applyTransferToPumpTankForm({
+  required FormulaTransferData transferData,
+  required TextEditingController capacityController,
+  required TextEditingController systemHeightController,
+}) {
+  if (transferData.targetFormulaId != 'tank') {
+    return false;
+  }
+  final data = transferData.data;
+  var applied = false;
+
+  final flow = data['flow_m3h'];
+  if (flow is num && flow.isFinite) {
+    capacityController.text = flow.toStringAsFixed(2);
+    applied = true;
+  }
+
+  final head = data['head_m'];
+  if (head is num && head.isFinite) {
+    systemHeightController.text = head.toStringAsFixed(2);
+    applied = true;
+  }
+
+  return applied;
+}
+
 class HydroforTab extends StatefulWidget {
   final Function(String, String)? onRes;
-  final VoidCallback? toTank;
+  final void Function(FormulaTransferData)? toTank;
   const HydroforTab({super.key, this.onRes, this.toTank});
   @override
   State<HydroforTab> createState() => _HydroforTabState();
@@ -871,8 +913,37 @@ class _HydroforTabState extends State<HydroforTab> {
     await prefs.setStringList('calculation_history', h);
   }
 
+  void _handleTransfer() {
+    final canTransfer = _qR != null && _hR != null && !_load;
+    if (!canTransfer) {
+      _showInfo(AppLocale.t('transfer_requires_calc'));
+      return;
+    }
+    final qVal = double.tryParse(_qR!.split(' ')[0]);
+    final hVal = double.tryParse(_hR!.split(' ')[0]);
+    final data = buildTransferFromHydrofor(flowM3h: qVal, headMeter: hVal);
+    if (data.isEmpty) {
+      _showInfo(AppLocale.t('transfer_requires_calc'));
+      return;
+    }
+    final transfer = FormulaTransferData(
+      sourceFormulaId: 'hydrofor',
+      targetFormulaId: 'tank',
+      createdAt: DateTime.now(),
+      data: data,
+    );
+    widget.toTank?.call(transfer);
+  }
+
+  void _showInfo(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final canTransfer = _qR != null && _hR != null && !_load;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(children: [
@@ -947,6 +1018,40 @@ class _HydroforTabState extends State<HydroforTab> {
           const Padding(
               padding: EdgeInsets.all(20), child: CircularProgressIndicator()),
         if (_qR != null && !_load) _buildResCard(),
+        if (widget.toTank != null) ...[
+          const SizedBox(height: 16),
+          Tooltip(
+            message:
+                canTransfer ? '' : AppLocale.t('transfer_requires_calc'),
+            child: ElevatedButton(
+                onPressed: widget.toTank == null
+                    ? null
+                    : () {
+                        if (canTransfer) {
+                          _handleTransfer();
+                        } else {
+                          _showInfo(AppLocale.t('transfer_requires_calc'));
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        canTransfer ? const Color(0xFF0052FF) : Colors.grey,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12))),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.send_to_mobile),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: ReadableText(text: AppLocale.t('go_tank')),
+                    ),
+                  ],
+                )),
+          ),
+        ],
       ]),
     );
   }
@@ -969,27 +1074,6 @@ class _HydroforTabState extends State<HydroforTab> {
             q: qVal,
             hm: hVal,
             isDark: Theme.of(context).brightness == Brightness.dark),
-        const SizedBox(height: 20),
-        if (widget.toTank != null)
-          ElevatedButton(
-              onPressed: widget.toTank,
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0052FF),
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10))),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.send_to_mobile),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: ReadableText(text: AppLocale.t('go_tank')),
-                  ),
-                ],
-              )),
         const SizedBox(height: 10),
         OutlinedButton.icon(
             icon: const Icon(Icons.picture_as_pdf),
@@ -1533,6 +1617,7 @@ class _TankTabState extends State<TankTab> {
   final PumpExpansionCalculator _calculator = PumpExpansionCalculator();
   PumpExpansionHeatingType? _heatingType;
   PumpExpansionResult? _result;
+  bool _transferApplied = false;
 
   @override
   void initState() {
@@ -1544,6 +1629,30 @@ class _TankTabState extends State<TankTab> {
     _heatingType = PumpExpansionCalculator.heatingTypes.first;
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_transferApplied) {
+      return;
+    }
+    final transfer =
+        AppStateScope.of(context).consumeTransfer(targetFormulaId: 'tank');
+    if (transfer == null) {
+      return;
+    }
+    final applied = applyTransferToPumpTankForm(
+      transferData: transfer,
+      capacityController: _kwCtrl,
+      systemHeightController: _heightCtrl,
+    );
+    if (applied) {
+      setState(() {
+        _result = null;
+      });
+    }
+    _transferApplied = true;
+  }
+
   void _clear() {
     setState(() {
       _kwCtrl.clear();
@@ -1553,6 +1662,7 @@ class _TankTabState extends State<TankTab> {
       _heatingType = PumpExpansionCalculator.heatingTypes.first;
       _result = null;
     });
+    AppStateScope.of(context).clearTransfer();
   }
 
   double _parseDouble(String value) {
