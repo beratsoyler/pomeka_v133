@@ -9,6 +9,8 @@ import '../search/formula_search.dart';
 import '../services/formula_storage.dart';
 import '../widgets/category_card.dart';
 import '../widgets/formula_card.dart';
+import '../widgets/readable_text.dart';
+import '../pages/chat_page.dart';
 import 'category_screen.dart';
 import 'calculators.dart';
 
@@ -214,9 +216,19 @@ class _CatalogHomeScreenState extends State<CatalogHomeScreen> {
                       mainAxisSpacing: 16,
                       childAspectRatio: 0.95,
                     ),
-                    itemCount: categories.length,
+                    itemCount: categories.length + 1,
                     itemBuilder: (context, index) {
-                      final category = categories[index];
+                      if (index == 0) {
+                        return _AssistantCard(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => buildChatPage(),
+                            ),
+                          ),
+                        );
+                      }
+                      final category = categories[index - 1];
                       final count =
                           FormulaRegistry.countForCategory(category.id);
                       return CategoryCard(
@@ -299,6 +311,81 @@ class _FormulaGrid extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _AssistantCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _AssistantCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = Theme.of(context).colorScheme.primary;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Card(
+        elevation: isDark ? 0 : 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 150;
+            final padding = compact ? 12.0 : 16.0;
+            final iconSize = compact ? 36.0 : 48.0;
+            final titleStyle = TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: compact ? 13 : 14,
+            );
+            final subtitleStyle = TextStyle(
+              fontSize: compact ? 11 : 12,
+              color: Colors.grey[500],
+            );
+            final titleSpacing = compact ? 6.0 : 12.0;
+            final subtitleSpacing = compact ? 3.0 : 6.0;
+
+            return Padding(
+              padding: EdgeInsets.all(padding),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Container(
+                      width: iconSize,
+                      height: iconSize,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.support_agent, color: color),
+                    ),
+                  ),
+                  SizedBox(height: titleSpacing),
+                  Expanded(
+                    child: ReadableText(
+                      text: 'Teknik Asistan',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: titleStyle,
+                    ),
+                  ),
+                  SizedBox(height: subtitleSpacing),
+                  ReadableText(
+                    text: 'Yapay zekâ destekli teknik danışman',
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    style: subtitleStyle,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
