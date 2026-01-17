@@ -14,6 +14,7 @@ import '../localization/app_locale.dart';
 import '../models/formula_transfer_data.dart';
 import '../services/pump_expansion_calculator.dart';
 import '../state/app_state.dart';
+import '../widgets/focus_label_text_field.dart';
 import '../widgets/readable_text.dart';
 
 // ---------------------------------------------------------------------------
@@ -686,18 +687,17 @@ class _UnitConverterTabState extends State<UnitConverterTab> {
               child: Column(children: [
                 Row(children: [
                   Expanded(
-                      flex: 2,
-                      child: TextField(
-                          controller: _inputCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          onChanged: (_) => _calculate(),
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                          decoration: InputDecoration(
-                              labelText: AppLocale.t('val_input'),
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12))))),
+                    flex: 2,
+                    child: FocusLabelTextField(
+                      controller: _inputCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      onChanged: (_) => _calculate(),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                      labelText: AppLocale.t('val_input'),
+                    ),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                       flex: 1,
@@ -951,12 +951,12 @@ class _HydroforTabState extends State<HydroforTab> {
             child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(children: [
-                  TextField(
-                      controller: _dCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                          labelText: AppLocale.t('units'),
-                          prefixIcon: const Icon(Icons.people))),
+                  FocusLabelTextField(
+                    controller: _dCtrl,
+                    keyboardType: TextInputType.number,
+                    labelText: AppLocale.t('units'),
+                    prefixIcon: const Icon(Icons.people),
+                  ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _type,
@@ -981,12 +981,12 @@ class _HydroforTabState extends State<HydroforTab> {
                         .toList(),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                      controller: _kCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                          labelText: AppLocale.t('floors'),
-                          prefixIcon: const Icon(Icons.apartment))),
+                  FocusLabelTextField(
+                    controller: _kCtrl,
+                    keyboardType: TextInputType.number,
+                    labelText: AppLocale.t('floors'),
+                    prefixIcon: const Icon(Icons.apartment),
+                  ),
                   const SizedBox(height: 32),
                   ElevatedButton(
                       onPressed: _calc,
@@ -1302,27 +1302,23 @@ class _BoilerZoneInputRow extends StatelessWidget {
           children: [
             Expanded(
               flex: 3,
-              child: TextField(
+              child: FocusLabelTextField(
                 controller: zone.loadController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: AppLocale.t('heat_load_kcal'),
-                  suffixText: 'kcal/h',
-                ),
+                labelText: AppLocale.t('heat_load_kcal'),
+                suffixText: 'kcal/h',
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               flex: 2,
-              child: TextField(
+              child: FocusLabelTextField(
                 controller: zone.deltaController,
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: AppLocale.t('delta_t'),
-                  suffixText: '°C',
-                ),
+                labelText: AppLocale.t('delta_t'),
+                suffixText: '°C',
               ),
             ),
           ],
@@ -1491,19 +1487,19 @@ class _BoilerTabState extends State<BoilerTab> {
             child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(children: [
-                  TextField(
-                      controller: _hCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                          labelText: AppLocale.t('units'),
-                          prefixIcon: const Icon(Icons.house_outlined))),
+                  FocusLabelTextField(
+                    controller: _hCtrl,
+                    keyboardType: TextInputType.number,
+                    labelText: AppLocale.t('units'),
+                    prefixIcon: const Icon(Icons.house_outlined),
+                  ),
                   const SizedBox(height: 16),
-                  TextField(
-                      controller: _pCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                          labelText: AppLocale.t('people'),
-                          prefixIcon: const Icon(Icons.people_outline))),
+                  FocusLabelTextField(
+                    controller: _pCtrl,
+                    keyboardType: TextInputType.number,
+                    labelText: AppLocale.t('people'),
+                    prefixIcon: const Icon(Icons.people_outline),
+                  ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<double>(
                     initialValue: _c,
@@ -1745,40 +1741,42 @@ class _TankTabState extends State<TankTab> {
                 child: Column(children: [
                   Row(children: [
                     Expanded(
-                        child: TextField(
-                            controller: _kwCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                                labelText: AppLocale.t('heat_cap'),
-                                prefixIcon: const Icon(Icons.bolt)))),
+                      child: FocusLabelTextField(
+                        controller: _kwCtrl,
+                        keyboardType: TextInputType.number,
+                        labelText: AppLocale.t('heat_cap'),
+                        prefixIcon: const Icon(Icons.bolt),
+                      ),
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
-                        child: TextField(
-                            controller: _heightCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                                labelText: AppLocale.t('sys_h'),
-                                prefixIcon: const Icon(Icons.height)))),
+                      child: FocusLabelTextField(
+                        controller: _heightCtrl,
+                        keyboardType: TextInputType.number,
+                        labelText: AppLocale.t('sys_h'),
+                        prefixIcon: const Icon(Icons.height),
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 16),
                   Row(children: [
                     Expanded(
-                        child: TextField(
-                            controller: _widthCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                                labelText: AppLocale.t('building_width'),
-                                prefixIcon:
-                                    const Icon(Icons.swap_horiz_outlined)))),
+                      child: FocusLabelTextField(
+                        controller: _widthCtrl,
+                        keyboardType: TextInputType.number,
+                        labelText: AppLocale.t('building_width'),
+                        prefixIcon: const Icon(Icons.swap_horiz_outlined),
+                      ),
+                    ),
                     const SizedBox(width: 16),
                     Expanded(
-                        child: TextField(
-                            controller: _lengthCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                                labelText: AppLocale.t('building_length'),
-                                prefixIcon:
-                                    const Icon(Icons.swap_vert_outlined)))),
+                      child: FocusLabelTextField(
+                        controller: _lengthCtrl,
+                        keyboardType: TextInputType.number,
+                        labelText: AppLocale.t('building_length'),
+                        prefixIcon: const Icon(Icons.swap_vert_outlined),
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<double>(
