@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../localization/app_locale.dart';
 import '../models/category_meta.dart';
-import 'scrollable_text.dart';
+import 'readable_text.dart';
 
 class CategoryCard extends StatelessWidget {
   final CategoryMeta category;
@@ -62,7 +62,7 @@ class CategoryCard extends StatelessWidget {
                   ),
                   SizedBox(height: titleSpacing),
                   Expanded(
-                    child: ScrollableText(
+                    child: ReadableText(
                       text: AppLocale.t(category.titleKey),
                       textAlign: TextAlign.center,
                       maxLines: 2,
@@ -70,7 +70,7 @@ class CategoryCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: subtitleSpacing),
-                  ScrollableText(
+                  ReadableText(
                     text: '$count ${AppLocale.t('formulas')}',
                     maxLines: 1,
                     textAlign: TextAlign.center,

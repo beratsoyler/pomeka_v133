@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../localization/app_locale.dart';
 import '../models/formula_meta.dart';
-import 'scrollable_text.dart';
+import 'readable_text.dart';
 
 class FormulaCard extends StatelessWidget {
   final FormulaMeta formula;
@@ -82,7 +82,7 @@ class FormulaCard extends StatelessWidget {
                   ),
                   SizedBox(height: titleSpacing),
                   Expanded(
-                    child: ScrollableText(
+                    child: ReadableText(
                       text: AppLocale.t(formula.titleKey),
                       maxLines: 2,
                       style: titleStyle,
