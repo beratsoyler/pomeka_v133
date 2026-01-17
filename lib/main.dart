@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'pages/chat_page.dart';
 import 'screens/catalog_home_screen.dart';
 import 'state/app_state.dart';
 
@@ -38,6 +39,9 @@ class _PomekaAppState extends State<PomekaApp> {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'POMEKA',
+        routes: {
+          '/chat': (_) => buildChatPage(),
+        },
         themeMode: _themeMode,
         theme: _buildTheme(Brightness.light),
         darkTheme: _buildTheme(Brightness.dark),
