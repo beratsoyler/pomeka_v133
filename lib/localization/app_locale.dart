@@ -5,6 +5,7 @@ class AppLocale {
     'TR': {
       'hydrofor': 'HİDROFOR TESİSATI',
       'boiler': 'KAZAN TESİSATI HESABI',
+      'boiler_expansion_tank': 'BOYLER GENLEŞME KABI HESABI',
       'tank': 'POMPA VE GENLEŞME TANKI',
       'converter': 'BİRİM DÖNÜŞTÜRÜCÜ',
       'calculate': 'HESAPLA',
@@ -24,9 +25,14 @@ class AppLocale {
       'b_type': 'Bina Tipi',
       'people': 'Hane Başı Kişi',
       'coil': 'Serpantin Tipi',
+      'boiler_expansion_volume': 'Boyler Hacmi (Litre)',
+      'boiler_expansion_pmin': 'İşletme Alt Basıncı (bar)',
+      'boiler_expansion_pmax': 'İşletme Üst Basıncı (bar)',
       'res_flow': 'Debi (Q)',
       'res_press': 'Basınç (Hm)',
       'res_vol': 'Boyler Hacmi (V)',
+      'boiler_expansion_result': 'Genleşme Kabı Hacmi (L)',
+      'boiler_expansion_water': 'Suyun Genleşme Miktarı (L)',
       'tank_vol': 'Tank Hacmi (Vtank)',
       'tank_required': 'Gereken Tank Hacmi',
       'tank_recommended': 'Önerilen Standart Tank',
@@ -59,6 +65,12 @@ class AppLocale {
       'err_tank_height': 'Sistem yüksekliği 45m ve üzeri. KONTROL ET.',
       'err_boiler_500':
           'Çift Serpantin 500L altı olamaz. Lütfen Tek Serpantin seçiniz.',
+      'err_boiler_expansion_invalid_input':
+          'Lütfen geçerli değerler giriniz.',
+      'err_boiler_expansion_invalid_volume':
+          'Boyler hacmi 0’dan büyük olmalıdır.',
+      'err_boiler_expansion_invalid_pressure':
+          'Üst basınç, alt basınçtan büyük olmalıdır.',
       't_konut': 'Toplu Konutlar',
       'l_konut': 'Lüks Konutlar',
       'l_villa': 'Lüks Villalar',
@@ -132,6 +144,7 @@ class AppLocale {
     'EN': {
       'hydrofor': 'BOOSTER SYSTEM',
       'boiler': 'BOILER INSTALLATION',
+      'boiler_expansion_tank': 'BOILER EXPANSION TANK',
       'tank': 'PUMP & EXPANSION TANK',
       'converter': 'UNIT CONVERTER',
       'calculate': 'CALCULATE',
@@ -151,6 +164,9 @@ class AppLocale {
       'b_type': 'Building Type',
       'people': 'People per House',
       'coil': 'Coil Type',
+      'boiler_expansion_volume': 'Boiler Volume (Liter)',
+      'boiler_expansion_pmin': 'Operating Min Pressure (bar)',
+      'boiler_expansion_pmax': 'Operating Max Pressure (bar)',
       'heat_cap': 'Heating Capacity (kW)',
       'sys_h': 'System Height (m)',
       'building_width': 'Building Width (m)',
@@ -180,9 +196,16 @@ class AppLocale {
       'err_tank_height': 'System height is 45m or higher. Check it.',
       'err_boiler_500':
           'Double Coil cannot be under 500L. Please select Single Coil.',
+      'err_boiler_expansion_invalid_input': 'Please enter valid values.',
+      'err_boiler_expansion_invalid_volume':
+          'Boiler volume must be greater than 0.',
+      'err_boiler_expansion_invalid_pressure':
+          'Max pressure must be higher than min pressure.',
       'res_flow': 'Flow (Q)',
       'res_press': 'Pressure (Hm)',
       'res_vol': 'Boiler Volume (V)',
+      'boiler_expansion_result': 'Expansion Tank Volume (L)',
+      'boiler_expansion_water': 'Water Expansion Amount (L)',
       'tank_vol': 'Tank Volume (Vtank)',
       'tank_required': 'Required Tank Volume',
       'tank_recommended': 'Recommended Standard Tank',
@@ -260,6 +283,7 @@ class AppLocale {
     'DE': {
       'hydrofor': 'DRUCKERHÖHUNG',
       'boiler': 'KESSELINSTALLATION',
+      'boiler_expansion_tank': 'BOILER-AUSDEHNUNGSGEFÄSS',
       'tank': 'PUMPE & EXPANSIONSGEFÄSS',
       'converter': 'EINHEITENWANDLER',
       'calculate': 'BERECHNEN',
@@ -279,9 +303,14 @@ class AppLocale {
       'b_type': 'Gebäudetyp',
       'people': 'Personen pro Haushalt',
       'coil': 'Spulentyp',
+      'boiler_expansion_volume': 'Boilervolumen (Liter)',
+      'boiler_expansion_pmin': 'Betriebsdruck min. (bar)',
+      'boiler_expansion_pmax': 'Betriebsdruck max. (bar)',
       'res_flow': 'Durchfluss (Q)',
       'res_press': 'Druck (Hm)',
       'res_vol': 'Boilervolumen (V)',
+      'boiler_expansion_result': 'Ausdehnungsgefäßvolumen (L)',
+      'boiler_expansion_water': 'Wasserausdehnung (L)',
       'tank_vol': 'Tankvolumen (Vtank)',
       'tank_required': 'Erforderliches Tankvolumen',
       'tank_recommended': 'Empfohlener Standardtank',
@@ -313,6 +342,12 @@ class AppLocale {
       'err_tank_invalid_result': 'Berechnung ungültig. Eingaben prüfen.',
       'err_tank_height': 'Systemhöhe ist 45 m oder höher. Bitte prüfen.',
       'err_boiler_500': 'Doppelspule darf nicht unter 500L sein.',
+      'err_boiler_expansion_invalid_input':
+          'Bitte gültige Werte eingeben.',
+      'err_boiler_expansion_invalid_volume':
+          'Boilervolumen muss größer als 0 sein.',
+      'err_boiler_expansion_invalid_pressure':
+          'Maximaldruck muss höher als Minimaldruck sein.',
       't_konut': 'Sozialwohnungen',
       'l_konut': 'Luxuswohnungen',
       'l_villa': 'Luxusvillen',
@@ -387,6 +422,7 @@ class AppLocale {
     'FR': {
       'hydrofor': 'SURPRESSION',
       'boiler': 'INSTALLATION DE CHAUDIÈRE',
+      'boiler_expansion_tank': 'VASE D’EXPANSION DU BALLON',
       'tank': 'POMPE & VASE D\'EXPANSION',
       'converter': 'CONVERTISSEUR',
       'calculate': 'CALCULER',
@@ -406,9 +442,14 @@ class AppLocale {
       'b_type': 'Type de Bâtiment',
       'people': 'Pers. par Foyer',
       'coil': 'Type de Serpentin',
+      'boiler_expansion_volume': 'Volume Ballon (Litre)',
+      'boiler_expansion_pmin': 'Pression min. de service (bar)',
+      'boiler_expansion_pmax': 'Pression max. de service (bar)',
       'res_flow': 'Débit (Q)',
       'res_press': 'Pression (Hm)',
       'res_vol': 'Volume Ballon (V)',
+      'boiler_expansion_result': 'Volume du vase d’expansion (L)',
+      'boiler_expansion_water': 'Quantité de dilatation (L)',
       'tank_vol': 'Volume Vase (Vtank)',
       'tank_required': 'Volume de vase requis',
       'tank_recommended': 'Vase standard recommandé',
@@ -442,6 +483,12 @@ class AppLocale {
           'La hauteur du système est de 45 m ou plus. Vérifiez.',
       'err_boiler_500':
           'Le double serpentin ne peut pas être inférieur à 500L.',
+      'err_boiler_expansion_invalid_input':
+          'Veuillez saisir des valeurs valides.',
+      'err_boiler_expansion_invalid_volume':
+          'Le volume du ballon doit être supérieur à 0.',
+      'err_boiler_expansion_invalid_pressure':
+          'La pression max. doit être supérieure à la pression min.',
       't_konut': 'Logements Sociaux',
       'l_konut': 'Logements de Luxe',
       'l_villa': 'Villas de Luxe',
