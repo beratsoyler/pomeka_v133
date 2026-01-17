@@ -12,7 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../kazan_tesisat_calculator.dart';
 import '../localization/app_locale.dart';
 import '../services/pump_expansion_calculator.dart';
-import '../widgets/scrollable_text.dart';
+import '../widgets/readable_text.dart';
 
 // ---------------------------------------------------------------------------
 // 1. PDF SERVICE
@@ -925,7 +925,7 @@ class _HydroforTabState extends State<HydroforTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: ScrollableText(
+                      child: ReadableText(
                         text: AppLocale.t('calculate'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       )),
@@ -938,7 +938,7 @@ class _HydroforTabState extends State<HydroforTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: ScrollableText(
+                      child: ReadableText(
                         text: AppLocale.t('clean'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       )),
@@ -986,14 +986,14 @@ class _HydroforTabState extends State<HydroforTab> {
                   const Icon(Icons.send_to_mobile),
                   const SizedBox(width: 8),
                   Flexible(
-                    child: ScrollableText(text: AppLocale.t('go_tank')),
+                    child: ReadableText(text: AppLocale.t('go_tank')),
                   ),
                 ],
               )),
         const SizedBox(height: 10),
         OutlinedButton.icon(
             icon: const Icon(Icons.picture_as_pdf),
-            label: ScrollableText(text: AppLocale.t('share_pdf')),
+            label: ReadableText(text: AppLocale.t('share_pdf')),
             onPressed: () => PdfService.generateAndShare(
                 title: AppLocale.t('hydrofor'),
                 data: {
@@ -1145,7 +1145,7 @@ class _BoilerInstallationTabState extends State<BoilerInstallationTab> {
                               minimumSize: const Size(double.infinity, 52),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12))),
-                          child: ScrollableText(text: AppLocale.t('clean')),
+                          child: ReadableText(text: AppLocale.t('clean')),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1159,7 +1159,7 @@ class _BoilerInstallationTabState extends State<BoilerInstallationTab> {
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12))),
-                          child: ScrollableText(text: AppLocale.t('calculate')),
+                          child: ReadableText(text: AppLocale.t('calculate')),
                         ),
                       ),
                     ],
@@ -1209,7 +1209,7 @@ class _BoilerZoneInputRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ScrollableText(
+        ReadableText(
           text: AppLocale.t(zone.labelKey),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -1315,7 +1315,7 @@ class _BoilerResultRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: ScrollableText(
+            child: ReadableText(
               text: label,
               style: TextStyle(
                 fontWeight: isMain ? FontWeight.bold : FontWeight.w500,
@@ -1324,7 +1324,7 @@ class _BoilerResultRow extends StatelessWidget {
             ),
           ),
           Flexible(
-            child: ScrollableText(
+            child: ReadableText(
               text: value,
               textAlign: TextAlign.right,
               style: TextStyle(
@@ -1443,7 +1443,7 @@ class _BoilerTabState extends State<BoilerTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: ScrollableText(
+                      child: ReadableText(
                         text: AppLocale.t('calculate'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       )),
@@ -1456,7 +1456,7 @@ class _BoilerTabState extends State<BoilerTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: ScrollableText(
+                      child: ReadableText(
                         text: AppLocale.t('clean'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       )),
@@ -1507,7 +1507,7 @@ class _BoilerTabState extends State<BoilerTab> {
                   const SizedBox(height: 20),
                   OutlinedButton.icon(
                       icon: const Icon(Icons.picture_as_pdf),
-                      label: ScrollableText(text: AppLocale.t('share_pdf')),
+                      label: ReadableText(text: AppLocale.t('share_pdf')),
                       onPressed: () => PdfService.generateAndShare(
                           title: AppLocale.t('boiler'),
                           data: {AppLocale.t('res_vol'): _res!}))
@@ -1695,7 +1695,7 @@ class _TankTabState extends State<TankTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: ScrollableText(
+                      child: ReadableText(
                         text: AppLocale.t('calculate'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       )),
@@ -1708,7 +1708,7 @@ class _TankTabState extends State<TankTab> {
                           minimumSize: const Size(double.infinity, 60),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12))),
-                      child: ScrollableText(
+                      child: ReadableText(
                         text: AppLocale.t('clean'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       )),
@@ -1735,7 +1735,7 @@ class _TankTabState extends State<TankTab> {
                     isMain: true),
                 const Divider(),
                 ExpansionTile(
-                  title: ScrollableText(text: AppLocale.t('details')),
+                  title: ReadableText(text: AppLocale.t('details')),
                   children: [
                     _resRow(
                         AppLocale.t('res_opening'),
@@ -1752,7 +1752,7 @@ class _TankTabState extends State<TankTab> {
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                     icon: const Icon(Icons.picture_as_pdf),
-                    label: ScrollableText(text: AppLocale.t('share_pdf')),
+                    label: ReadableText(text: AppLocale.t('share_pdf')),
                     onPressed: () => PdfService.generateAndShare(
                         title: AppLocale.t('tank'),
                         data: {
@@ -1784,7 +1784,7 @@ class _TankTabState extends State<TankTab> {
       child: Row(
         children: [
           Expanded(
-            child: ScrollableText(
+            child: ReadableText(
               text: label,
               style: TextStyle(
                   color: isMain ? const Color(0xFF0052FF) : Colors.grey,
@@ -1794,7 +1794,7 @@ class _TankTabState extends State<TankTab> {
           ),
           const SizedBox(width: 8),
           Flexible(
-            child: ScrollableText(
+            child: ReadableText(
               text: val,
               textAlign: TextAlign.right,
               style: TextStyle(
@@ -1863,12 +1863,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: ScrollableText(text: AppLocale.t('delete_confirm_title')),
-        content: ScrollableText(text: AppLocale.t('delete_confirm_msg')),
+        title: ReadableText(text: AppLocale.t('delete_confirm_title')),
+        content: ReadableText(text: AppLocale.t('delete_confirm_msg')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: ScrollableText(text: AppLocale.t('cancel'))),
+              child: ReadableText(text: AppLocale.t('cancel'))),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -1881,7 +1881,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 });
               }
             },
-            child: ScrollableText(
+            child: ReadableText(
               text: AppLocale.t('delete'),
               style: const TextStyle(color: Colors.red),
             ),
@@ -1914,9 +1914,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: ScrollableText(
+        centerTitle: true,
+        title: ReadableText(
           text: AppLocale.t('history_title'),
           style: GoogleFonts.poppins(),
+          maxLines: 2,
+          textAlign: TextAlign.center,
         ),
         actions: [
           IconButton(
@@ -1938,7 +1941,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               onPressed: _exportSelected,
               backgroundColor: const Color(0xFF0052FF),
               icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-              label: ScrollableText(
+              label: ReadableText(
                 text:
                     '${AppLocale.t('export_selected')} (${_selectedIndices.length})',
                 style: const TextStyle(color: Colors.white),
@@ -1947,7 +1950,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           : null,
       body: _history.isEmpty
           ? Center(
-              child: ScrollableText(
+              child: ReadableText(
                 text: AppLocale.t('no_data'),
                 style: GoogleFonts.poppins(color: Colors.grey),
               ))
@@ -1991,7 +1994,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                child: ScrollableText(
+                                child: ReadableText(
                                   text: item['type'] ?? 'Hesap',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
@@ -2001,7 +2004,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               Row(
                                 children: [
                                   Flexible(
-                                    child: ScrollableText(
+                                    child: ReadableText(
                                       text: dateStr,
                                       style: const TextStyle(
                                           fontSize: 12, color: Colors.grey),
@@ -2025,20 +2028,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             ],
                           ),
                           const Divider(height: 24),
-                          ScrollableText(
+                          ReadableText(
                               text: '${AppLocale.t('inputs')}:',
                               style: TextStyle(
                                   fontSize: 12, color: Colors.grey[600])),
-                          ScrollableText(
+                          ReadableText(
                               text: inputs,
                               style:
                                   const TextStyle(fontWeight: FontWeight.w500)),
                           const SizedBox(height: 12),
-                          ScrollableText(
+                          ReadableText(
                               text: '${AppLocale.t('results')}:',
                               style: TextStyle(
                                   fontSize: 12, color: Colors.grey[600])),
-                          ScrollableText(
+                          ReadableText(
                               text: item['res'] ?? '---',
                               style: const TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.bold)),
