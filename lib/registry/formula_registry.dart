@@ -118,6 +118,18 @@ class FormulaRegistry {
       ),
     ),
     FormulaMeta(
+      id: 'fan_coil',
+      titleKey: 'fan_coil',
+      categoryId: categoryHeating,
+      icon: Icons.ac_unit,
+      tags: const ['fan', 'coil', 'hvac', 'cooling', 'heating'],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'fan_coil',
+        titleKey: 'fan_coil',
+        child: FanCoilTab(),
+      ),
+    ),
+    FormulaMeta(
       id: 'tank',
       titleKey: 'tank',
       categoryId: categoryHeating,
