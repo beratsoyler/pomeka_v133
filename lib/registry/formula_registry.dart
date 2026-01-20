@@ -5,6 +5,7 @@ import '../models/formula_meta.dart';
 import '../localization/app_locale.dart';
 import '../screens/calculators.dart';
 import '../screens/formula_screen.dart';
+import '../screens/modular_water_tank_tab.dart';
 import '../state/app_state.dart';
 
 class FormulaRegistry {
@@ -66,6 +67,18 @@ class FormulaRegistry {
             Navigator.push(context, MaterialPageRoute(builder: tank.builder));
           },
         ),
+      ),
+    ),
+    FormulaMeta(
+      id: 'modular_tank',
+      titleKey: 'modular_tank',
+      categoryId: categoryWater,
+      icon: Icons.grid_view,
+      tags: const ['tank', 'water', 'modular', 'panel'],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'modular_tank',
+        titleKey: 'modular_tank',
+        child: ModularWaterTankTab(),
       ),
     ),
     FormulaMeta(
