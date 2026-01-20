@@ -1,231 +1,21 @@
-import 'dart:convert';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../kazan_tesisat_calculator.dart';
 import '../localization/app_locale.dart';
+import '../models/calculation_history_record.dart';
 import '../models/formula_transfer_data.dart';
+import '../services/calculation_history_service.dart';
 import '../services/fan_coil_calculator.dart';
+import '../services/pdf_report_service.dart';
 import '../services/pump_expansion_calculator.dart';
 import '../state/app_state.dart';
 import '../widgets/focus_label_text_field.dart';
 import '../widgets/readable_text.dart';
 import '../widgets/tappable_label.dart';
-
 // ---------------------------------------------------------------------------
-// 1. PDF SERVICE
-// ---------------------------------------------------------------------------
-class PdfService {
-  static Future<void> generateAndShare(
-      {required String title, required Map<String, String> data}) async {
-    final logoData = await rootBundle.load('assets/pomeka-png-1757403926.png');
-    final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
-    final font = await PdfGoogleFonts.robotoRegular();
-    final fontBold = await PdfGoogleFonts.robotoBold();
-    const PdfColor pdfPrimary = PdfColor.fromInt(0xFF0052FF);
-    const PdfColor pdfLightGrey = PdfColor.fromInt(0xFFF4F6F8);
-
-    final pdf = pw.Document();
-    pdf.addPage(pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      theme: pw.ThemeData.withFont(base: font, bold: fontBold),
-      build: (pw.Context context) {
-        return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              _buildHeader(logoImage, AppLocale.t('report_title'), pdfPrimary),
-              pw.SizedBox(height: 30),
-              pw.Center(
-                  child: pw.Text(title.toUpperCase(),
-                      style: pw.TextStyle(
-                          fontSize: 22,
-                          fontWeight: pw.FontWeight.bold,
-                          color: pdfPrimary,
-                          letterSpacing: 1.2))),
-              pw.SizedBox(height: 30),
-              _buildTable(data, pdfPrimary, pdfLightGrey),
-              pw.Spacer(),
-              _buildFooter(pdfPrimary),
-            ]);
-      },
-    ));
-    await Printing.sharePdf(
-        bytes: await pdf.save(),
-        filename: 'Pomeka_${title.replaceAll(' ', '_')}.pdf');
-  }
-
-  static Future<void> generateMultiReport(
-      List<Map<String, dynamic>> items) async {
-    final logoData = await rootBundle.load('assets/pomeka-png-1757403926.png');
-    final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
-    final font = await PdfGoogleFonts.robotoRegular();
-    final fontBold = await PdfGoogleFonts.robotoBold();
-    const PdfColor pdfPrimary = PdfColor.fromInt(0xFF0052FF);
-    const PdfColor pdfLightGrey = PdfColor.fromInt(0xFFF4F6F8);
-
-    final pdf = pw.Document();
-    pdf.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      theme: pw.ThemeData.withFont(base: font, bold: fontBold),
-      header: (context) => _buildHeader(
-          logoImage, AppLocale.t('multi_report_title'), pdfPrimary),
-      footer: (context) => _buildFooter(pdfPrimary),
-      build: (context) => [
-        pw.SizedBox(height: 20),
-        ...items.map((item) {
-          final type = item['type'] ?? '';
-          final date = item['time'] != null
-              ? item['time']
-                  .toString()
-                  .substring(0, 16)
-                  .replaceAll('T', ' ')
-              : '-';
-          final inputs = item['inputs'] ?? '';
-          final result = item['res'] ?? '';
-          return pw.Container(
-            margin: const pw.EdgeInsets.only(bottom: 20),
-            decoration: pw.BoxDecoration(
-                border: pw.Border.all(color: PdfColors.grey300),
-                borderRadius: pw.BorderRadius.circular(8),
-                color: PdfColors.white),
-            child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Container(
-                    padding: const pw.EdgeInsets.all(10),
-                    decoration: const pw.BoxDecoration(
-                        color: pdfLightGrey,
-                        borderRadius:
-                            pw.BorderRadius.vertical(top: pw.Radius.circular(8))),
-                    child: pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(type,
-                              style: pw.TextStyle(
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: pdfPrimary)),
-                          pw.Text(date,
-                              style: const pw.TextStyle(
-                                  fontSize: 10, color: PdfColors.grey700)),
-                        ]),
-                  ),
-                  pw.Divider(height: 1, color: PdfColors.grey300),
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.all(12),
-                    child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text('${AppLocale.t('inputs')}:',
-                              style: const pw.TextStyle(
-                                  fontSize: 10, color: PdfColors.grey600)),
-                          pw.Text(inputs,
-                              style: const pw.TextStyle(fontSize: 11)),
-                          pw.SizedBox(height: 8),
-                          pw.Text('${AppLocale.t('results')}:',
-                              style: const pw.TextStyle(
-                                  fontSize: 10, color: PdfColors.grey600)),
-                          pw.Text(result,
-                              style: pw.TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: pw.FontWeight.bold,
-                                  color: pdfPrimary)),
-                        ]),
-                  ),
-                ]),
-          );
-        }),
-      ],
-    ));
-    await Printing.sharePdf(
-        bytes: await pdf.save(), filename: 'Pomeka_Toplu_Rapor.pdf');
-  }
-
-  static pw.Widget _buildHeader(
-      pw.MemoryImage logo, String title, PdfColor color) {
-    return pw.Column(children: [
-      pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            pw.Image(logo, height: 40),
-            pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-              pw.Text(title,
-                  style: pw.TextStyle(
-                      fontWeight: pw.FontWeight.bold,
-                      fontSize: 12,
-                      color: color)),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                  '${AppLocale.t('date')}: ${DateTime.now().toString().substring(0, 10)}',
-                  style: const pw.TextStyle(
-                      fontSize: 10, color: PdfColors.grey700)),
-            ])
-          ]),
-      pw.SizedBox(height: 10),
-      pw.Container(height: 2, width: double.infinity, color: color),
-    ]);
-  }
-
-  static pw.Widget _buildFooter(PdfColor color) {
-    return pw.Column(children: [
-      pw.Divider(color: PdfColors.grey300),
-      pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
-        pw.Text("POMEKA Mobile Tools",
-            style: pw.TextStyle(
-                fontSize: 8, fontWeight: pw.FontWeight.bold, color: color)),
-        pw.Text(AppLocale.t('pdf_footer'),
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-      ])
-    ]);
-  }
-
-  static pw.Widget _buildTable(
-      Map<String, String> data, PdfColor primary, PdfColor bg) {
-    return pw.Container(
-      decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColors.grey300, width: 1),
-          borderRadius: pw.BorderRadius.circular(8),
-          color: bg),
-      child: pw.Column(children: data.entries.map((e) {
-        final index = data.keys.toList().indexOf(e.key);
-        final isLast = index == data.length - 1;
-        return pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: pw.BoxDecoration(
-              border: isLast
-                  ? null
-                  : const pw.Border(
-                      bottom: pw.BorderSide(color: PdfColors.grey300)),
-              color: index % 2 == 0 ? PdfColors.white : bg),
-          child: pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(e.key,
-                    style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 11,
-                        color: PdfColors.grey800)),
-                pw.Text(e.value,
-                    style: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        fontSize: 12,
-                        color: primary)),
-              ]),
-        );
-      }).toList()),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 2. CHART WIDGETS
+// 1. CHART WIDGETS
 // ---------------------------------------------------------------------------
 
 class ResultChart extends StatelessWidget {
@@ -904,15 +694,24 @@ class _HydroforTabState extends State<HydroforTab> {
 
     widget.onRes?.call(q.toStringAsFixed(2), hm.toStringAsFixed(2));
 
-    final prefs = await SharedPreferences.getInstance();
-    final h = prefs.getStringList('calculation_history') ?? [];
-    h.add(jsonEncode({
-      'type': AppLocale.t('hydrofor'),
-      'res': '$_qR / $_hR',
-      'time': DateTime.now().toString(),
-      'inputs': '${AppLocale.t('units')}: ${_dCtrl.text}, ...'
-    }));
-    await prefs.setStringList('calculation_history', h);
+    final createdAt = DateTime.now();
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'hydrofor',
+        formulaName: AppLocale.t('hydrofor'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('units'): _dCtrl.text,
+          AppLocale.t('b_type'): AppLocale.t(_type ?? 't_konut'),
+          AppLocale.t('floors'): _kCtrl.text,
+        },
+        outputs: {
+          AppLocale.t('res_flow'): _qR ?? '-',
+          AppLocale.t('res_press'): _hR ?? '-',
+        },
+      ),
+    );
   }
 
   void _handleTransfer() {
@@ -945,7 +744,6 @@ class _HydroforTabState extends State<HydroforTab> {
 
   @override
   Widget build(BuildContext context) {
-    final canTransfer = _qR != null && _hR != null && !_load;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(children: [
@@ -1020,40 +818,6 @@ class _HydroforTabState extends State<HydroforTab> {
           const Padding(
               padding: EdgeInsets.all(20), child: CircularProgressIndicator()),
         if (_qR != null && !_load) _buildResCard(),
-        if (widget.toTank != null) ...[
-          const SizedBox(height: 16),
-          Tooltip(
-            message:
-                canTransfer ? '' : AppLocale.t('transfer_requires_calc'),
-            child: ElevatedButton(
-                onPressed: widget.toTank == null
-                    ? null
-                    : () {
-                        if (canTransfer) {
-                          _handleTransfer();
-                        } else {
-                          _showInfo(AppLocale.t('transfer_requires_calc'));
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        canTransfer ? const Color(0xFF0052FF) : Colors.grey,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12))),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.send_to_mobile),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: ReadableText(text: AppLocale.t('go_tank')),
-                    ),
-                  ],
-                )),
-          ),
-        ],
       ]),
     );
   }
@@ -1080,12 +844,18 @@ class _HydroforTabState extends State<HydroforTab> {
         OutlinedButton.icon(
             icon: const Icon(Icons.picture_as_pdf),
             label: ReadableText(text: AppLocale.t('share_pdf')),
-            onPressed: () => PdfService.generateAndShare(
-                title: AppLocale.t('hydrofor'),
-                data: {
-                  AppLocale.t('res_flow'): _qR!,
-                  AppLocale.t('res_press'): _hR!
-                }))
+            onPressed: () => PdfReportService.generateSingleReport(
+                  formulaName: AppLocale.t('hydrofor'),
+                  inputs: {
+                    AppLocale.t('units'): _dCtrl.text,
+                    AppLocale.t('b_type'): AppLocale.t(_type ?? 't_konut'),
+                    AppLocale.t('floors'): _kCtrl.text,
+                  },
+                  outputs: {
+                    AppLocale.t('res_flow'): _qR ?? '-',
+                    AppLocale.t('res_press'): _hR ?? '-',
+                  },
+                ))
       ]),
     );
   }
@@ -1469,15 +1239,25 @@ class _BoilerTabState extends State<BoilerTab> {
       _res = '${val.toStringAsFixed(2)} L';
       _load = false;
     });
-    final prefs = await SharedPreferences.getInstance();
-    final h = prefs.getStringList('calculation_history') ?? [];
-    h.add(jsonEncode({
-      'type': AppLocale.t('boiler'),
-      'res': _res,
-      'time': DateTime.now().toString(),
-      'inputs': '...'
-    }));
-    await prefs.setStringList('calculation_history', h);
+    final createdAt = DateTime.now();
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'boiler_installation',
+        formulaName: AppLocale.t('boiler'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('units'): _hCtrl.text,
+          AppLocale.t('people'): _pCtrl.text,
+          AppLocale.t('coil'): _c == 1.0
+              ? AppLocale.t('double')
+              : AppLocale.t('single'),
+        },
+        outputs: {
+          AppLocale.t('res_vol'): _res ?? '-',
+        },
+      ),
+    );
   }
 
   @override
@@ -1590,9 +1370,17 @@ class _BoilerTabState extends State<BoilerTab> {
                   OutlinedButton.icon(
                       icon: const Icon(Icons.picture_as_pdf),
                       label: ReadableText(text: AppLocale.t('share_pdf')),
-                      onPressed: () => PdfService.generateAndShare(
-                          title: AppLocale.t('boiler'),
-                          data: {AppLocale.t('res_vol'): _res!}))
+                      onPressed: () => PdfReportService.generateSingleReport(
+                            formulaName: AppLocale.t('boiler'),
+                            inputs: {
+                              AppLocale.t('units'): _hCtrl.text,
+                              AppLocale.t('people'): _pCtrl.text,
+                              AppLocale.t('coil'): _c == 1.0
+                                  ? AppLocale.t('double')
+                                  : AppLocale.t('single'),
+                            },
+                            outputs: {AppLocale.t('res_vol'): _res ?? '-'},
+                          ))
                 ]
               ]))
       ]),
@@ -1702,17 +1490,36 @@ class _TankTabState extends State<TankTab> {
       );
       setState(() => _result = result);
 
-      final prefs = await SharedPreferences.getInstance();
-      final hist = prefs.getStringList('calculation_history') ?? [];
-      final volumeText = '${result.tankVolumeLiter.toStringAsFixed(0)} L';
-      hist.add(jsonEncode({
-        'type': AppLocale.t('tank'),
-        'res': volumeText,
-        'time': DateTime.now().toString(),
-        'inputs':
-            'kW: $kw, W: $width m, L: $length m, H: $height m, ${AppLocale.t('heat_type')}: ${AppLocale.t(heatingType.labelKey)}'
-      }));
-      await prefs.setStringList('calculation_history', hist);
+      final createdAt = DateTime.now();
+      await CalculationHistoryService.append(
+        CalculationHistoryRecord(
+          id: createdAt.microsecondsSinceEpoch.toString(),
+          formulaId: 'tank',
+          formulaName: AppLocale.t('tank'),
+          createdAt: createdAt,
+          inputs: {
+            AppLocale.t('heat_cap'): _kwCtrl.text,
+            AppLocale.t('building_width'): _widthCtrl.text,
+            AppLocale.t('building_length'): _lengthCtrl.text,
+            AppLocale.t('sys_h'): _heightCtrl.text,
+            AppLocale.t('heat_type'): AppLocale.t(heatingType.labelKey),
+          },
+          outputs: {
+            AppLocale.t('res_flow'):
+                '${result.flowM3PerHour.toStringAsFixed(2)} ${AppLocale.t('flow_unit')}',
+            AppLocale.t('res_press'):
+                '${result.headMeter.toStringAsFixed(2)} ${AppLocale.t('press_unit')}',
+            AppLocale.t('tank_vol'):
+                '${result.tankVolumeLiter.toStringAsFixed(0)} L',
+            AppLocale.t('res_opening'):
+                '${result.openingPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+            AppLocale.t('res_safety'):
+                '${result.safetyPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+            AppLocale.t('res_static'):
+                '${result.staticPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+          },
+        ),
+      );
     } on PumpExpansionCalculationException catch (e) {
       setState(() => _result = null);
       switch (e.error) {
@@ -1863,26 +1670,33 @@ class _TankTabState extends State<TankTab> {
                 OutlinedButton.icon(
                     icon: const Icon(Icons.picture_as_pdf),
                     label: ReadableText(text: AppLocale.t('share_pdf')),
-                    onPressed: () => PdfService.generateAndShare(
-                        title: AppLocale.t('tank'),
-                        data: {
-                          AppLocale.t('heat_cap'): _kwCtrl.text,
-                          AppLocale.t('building_width'): _widthCtrl.text,
-                          AppLocale.t('building_length'): _lengthCtrl.text,
-                          AppLocale.t('sys_h'): _heightCtrl.text,
-                          AppLocale.t('res_flow'):
-                              '${_result!.flowM3PerHour.toStringAsFixed(2)} ${AppLocale.t('flow_unit')}',
-                          AppLocale.t('res_press'):
-                              '${_result!.headMeter.toStringAsFixed(2)} ${AppLocale.t('press_unit')}',
-                          AppLocale.t('tank_vol'):
-                              '${_result!.tankVolumeLiter.toStringAsFixed(0)} L',
-                          AppLocale.t('res_opening'):
-                              '${_result!.openingPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
-                          AppLocale.t('res_safety'):
-                              '${_result!.safetyPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
-                          AppLocale.t('res_static'):
-                              '${_result!.staticPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
-                        }))
+                    onPressed: () => PdfReportService.generateSingleReport(
+                          formulaName: AppLocale.t('tank'),
+                          inputs: {
+                            AppLocale.t('heat_cap'): _kwCtrl.text,
+                            AppLocale.t('building_width'): _widthCtrl.text,
+                            AppLocale.t('building_length'): _lengthCtrl.text,
+                            AppLocale.t('sys_h'): _heightCtrl.text,
+                            AppLocale.t('heat_type'):
+                                _heatingType == null
+                                    ? '-'
+                                    : AppLocale.t(_heatingType!.labelKey),
+                          },
+                          outputs: {
+                            AppLocale.t('res_flow'):
+                                '${_result!.flowM3PerHour.toStringAsFixed(2)} ${AppLocale.t('flow_unit')}',
+                            AppLocale.t('res_press'):
+                                '${_result!.headMeter.toStringAsFixed(2)} ${AppLocale.t('press_unit')}',
+                            AppLocale.t('tank_vol'):
+                                '${_result!.tankVolumeLiter.toStringAsFixed(0)} L',
+                            AppLocale.t('res_opening'):
+                                '${_result!.openingPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+                            AppLocale.t('res_safety'):
+                                '${_result!.safetyPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+                            AppLocale.t('res_static'):
+                                '${_result!.staticPressureBar.toStringAsFixed(1)} ${AppLocale.t('bar_unit')}',
+                          },
+                        ))
               ]))
       ]),
     );
@@ -1993,16 +1807,28 @@ class _FanCoilTabState extends State<FanCoilTab> {
 
     setState(() => _result = result);
 
-    final prefs = await SharedPreferences.getInstance();
-    final hist = prefs.getStringList('calculation_history') ?? [];
-    hist.add(jsonEncode({
-      'type': AppLocale.t('fan_coil'),
-      'res': _formatResultSummary(result),
-      'time': DateTime.now().toString(),
-      'inputs':
-          '${AppLocale.t('fan_coil_pipe_type')}: ${_pipeTypeLabel(_pipeType)}, ${AppLocale.t('fan_coil_area')}: ${area.toStringAsFixed(2)} m², ${AppLocale.t('fan_coil_usage_type')}: ${_usageTypeLabel(_usageType)}, ${AppLocale.t('fan_coil_calc_type')}: ${_calcModeLabel(_calcMode)}',
-    }));
-    await prefs.setStringList('calculation_history', hist);
+    final createdAt = DateTime.now();
+    final outputs = <String, dynamic>{};
+    for (final row in _resultRows(result)) {
+      outputs[row.label] = row.value;
+    }
+    outputs[AppLocale.t('fan_coil_unit_loads')] =
+        'qc=${result.qc.toStringAsFixed(0)} W/m², qh=${result.qh.toStringAsFixed(0)} W/m²';
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'fan_coil',
+        formulaName: AppLocale.t('fan_coil'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('fan_coil_pipe_type'): _pipeTypeLabel(_pipeType),
+          AppLocale.t('fan_coil_area'): '${area.toStringAsFixed(2)} m²',
+          AppLocale.t('fan_coil_usage_type'): _usageTypeLabel(_usageType),
+          AppLocale.t('fan_coil_calc_type'): _calcModeLabel(_calcMode),
+        },
+        outputs: outputs,
+      ),
+    );
   }
 
   String _formatResultSummary(FanCoilResult result) {
@@ -2211,6 +2037,33 @@ class _FanCoilTabState extends State<FanCoilTab> {
                     '${AppLocale.t('fan_coil_unit_loads')}: qc=${result.qc.toStringAsFixed(0)} W/m², qh=${result.qh.toStringAsFixed(0)} W/m²',
                 style: const TextStyle(color: Colors.grey),
               ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.picture_as_pdf),
+                label: ReadableText(text: AppLocale.t('share_pdf')),
+                onPressed: () {
+                  final outputs = <String, dynamic>{};
+                  for (final row in _resultRows(result)) {
+                    outputs[row.label] = row.value;
+                  }
+                  outputs[AppLocale.t('fan_coil_unit_loads')] =
+                      'qc=${result.qc.toStringAsFixed(0)} W/m², qh=${result.qh.toStringAsFixed(0)} W/m²';
+                  PdfReportService.generateSingleReport(
+                    formulaName: AppLocale.t('fan_coil'),
+                    inputs: {
+                      AppLocale.t('fan_coil_pipe_type'):
+                          _pipeTypeLabel(_pipeType),
+                      AppLocale.t('fan_coil_area'):
+                          '${_areaCtrl.text} m²',
+                      AppLocale.t('fan_coil_usage_type'):
+                          _usageTypeLabel(_usageType),
+                      AppLocale.t('fan_coil_calc_type'):
+                          _calcModeLabel(_calcMode),
+                    },
+                    outputs: outputs,
+                  );
+                },
+              ),
             ],
           ],
         ),
@@ -2303,17 +2156,27 @@ class _RecirculationPumpTabState extends State<RecirculationPumpTab> {
       _flowM3h = flowM3h;
     });
 
-    final prefs = await SharedPreferences.getInstance();
-    final hist = prefs.getStringList('calculation_history') ?? [];
-    hist.add(jsonEncode({
-      'type': AppLocale.t('recirculation_pump'),
-      'res':
-          '${heatLossW.toStringAsFixed(2)} W / ${flowLh.toStringAsFixed(2)} L/h / ${flowM3h.toStringAsFixed(2)} m³/h',
-      'time': DateTime.now().toString(),
-      'inputs':
-          '${AppLocale.t('recirc_lb')}: ${lb.toStringAsFixed(2)} m, ${AppLocale.t('recirc_lo')}: ${lo.toStringAsFixed(2)} m',
-    }));
-    await prefs.setStringList('calculation_history', hist);
+    final createdAt = DateTime.now();
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'recirculation_pump',
+        formulaName: AppLocale.t('recirculation_pump'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('recirc_lb'): '${lb.toStringAsFixed(2)} m',
+          AppLocale.t('recirc_lo'): '${lo.toStringAsFixed(2)} m',
+        },
+        outputs: {
+          AppLocale.t('recirc_heat_loss'):
+              '${heatLossW.toStringAsFixed(2)} W',
+          AppLocale.t('recirc_required_flow_lh'):
+              '${flowLh.toStringAsFixed(2)} L/h',
+          AppLocale.t('recirc_required_flow_m3h'):
+              '${flowM3h.toStringAsFixed(2)} m³/h',
+        },
+      ),
+    );
   }
 
   @override
@@ -2404,6 +2267,26 @@ class _RecirculationPumpTabState extends State<RecirculationPumpTab> {
                   value: '${_flowM3h!.toStringAsFixed(2)} m³/h',
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.picture_as_pdf),
+              label: ReadableText(text: AppLocale.t('share_pdf')),
+              onPressed: () => PdfReportService.generateSingleReport(
+                formulaName: AppLocale.t('recirculation_pump'),
+                inputs: {
+                  AppLocale.t('recirc_lb'): '${_lbCtrl.text} m',
+                  AppLocale.t('recirc_lo'): '${_loCtrl.text} m',
+                },
+                outputs: {
+                  AppLocale.t('recirc_heat_loss'):
+                      '${_heatLossW!.toStringAsFixed(2)} W',
+                  AppLocale.t('recirc_required_flow_lh'):
+                      '${_flowLh!.toStringAsFixed(2)} L/h',
+                  AppLocale.t('recirc_required_flow_m3h'):
+                      '${_flowM3h!.toStringAsFixed(2)} m³/h',
+                },
+              ),
             ),
           ],
         ],
@@ -2566,25 +2449,39 @@ class _CirculationPumpTabState extends State<CirculationPumpTab> {
       _selectedX = selectedX;
     });
 
-    final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList('calculation_history') ?? [];
-    final safetySuffix = _applySafety
-        ? ' / ${flowSafe!.toStringAsFixed(3)} m³/h / ${headSafe!.toStringAsFixed(3)} mSS'
-        : '';
-    history.add(jsonEncode({
-      'type': AppLocale.t('circulation_pump'),
-      'res':
-          '${flow.toStringAsFixed(3)} m³/h / ${head.toStringAsFixed(3)} mSS$safetySuffix',
-      'time': DateTime.now().toString(),
-      'inputs':
-          '${AppLocale.t('circulation_capacity')}: ${capacity.toStringAsFixed(2)} ${AppLocale.t(_capacityUnit.labelKey)}, '
-              '${AppLocale.t('circulation_system_type')}: ${AppLocale.t(_systemOption.labelKey)}, '
-              '${AppLocale.t('circulation_length')}: ${length.toStringAsFixed(2)} m, '
-              '${AppLocale.t('circulation_width')}: ${width.toStringAsFixed(2)} m, '
-              '${AppLocale.t('circulation_height')}: ${height.toStringAsFixed(2)} m, '
-              '${AppLocale.t('circulation_safety')}: ${_applySafety ? 'On' : 'Off'}',
-    }));
-    await prefs.setStringList('calculation_history', history);
+    final createdAt = DateTime.now();
+    final outputs = <String, dynamic>{
+      AppLocale.t('circulation_flow'): '${flow.toStringAsFixed(3)} m³/h',
+      AppLocale.t('circulation_head'): '${head.toStringAsFixed(3)} mSS',
+      AppLocale.t('circulation_selected_x'):
+          '${selectedX.toStringAsFixed(0)} (${AppLocale.t(_systemOption.labelKey)})',
+    };
+    if (_applySafety && flowSafe != null && headSafe != null) {
+      outputs[AppLocale.t('circulation_flow_safe')] =
+          '${flowSafe.toStringAsFixed(3)} m³/h';
+      outputs[AppLocale.t('circulation_head_safe')] =
+          '${headSafe.toStringAsFixed(3)} mSS';
+    }
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'circulation_pump',
+        formulaName: AppLocale.t('circulation_pump'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('circulation_capacity'):
+              '${capacity.toStringAsFixed(2)} ${AppLocale.t(_capacityUnit.labelKey)}',
+          AppLocale.t('circulation_system_type'):
+              AppLocale.t(_systemOption.labelKey),
+          AppLocale.t('circulation_length'): '${length.toStringAsFixed(2)} m',
+          AppLocale.t('circulation_width'): '${width.toStringAsFixed(2)} m',
+          AppLocale.t('circulation_height'): '${height.toStringAsFixed(2)} m',
+          AppLocale.t('circulation_safety'):
+              _applySafety ? 'On' : 'Off',
+        },
+        outputs: outputs,
+      ),
+    );
   }
 
   @override
@@ -2786,6 +2683,45 @@ class _CirculationPumpTabState extends State<CirculationPumpTab> {
                   '${AppLocale.t('circulation_selected_x')}: ${_selectedX!.toStringAsFixed(0)} (${AppLocale.t(_systemOption.labelKey)})',
               style: const TextStyle(color: Colors.grey),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.picture_as_pdf),
+              label: ReadableText(text: AppLocale.t('share_pdf')),
+              onPressed: () {
+                final outputs = <String, dynamic>{
+                  AppLocale.t('circulation_flow'):
+                      '${_flow!.toStringAsFixed(3)} m³/h',
+                  AppLocale.t('circulation_head'):
+                      '${_head!.toStringAsFixed(3)} mSS',
+                  AppLocale.t('circulation_selected_x'):
+                      '${_selectedX!.toStringAsFixed(0)} (${AppLocale.t(_systemOption.labelKey)})',
+                };
+                if (_applySafety && _flowSafe != null && _headSafe != null) {
+                  outputs[AppLocale.t('circulation_flow_safe')] =
+                      '${_flowSafe!.toStringAsFixed(3)} m³/h';
+                  outputs[AppLocale.t('circulation_head_safe')] =
+                      '${_headSafe!.toStringAsFixed(3)} mSS';
+                }
+                PdfReportService.generateSingleReport(
+                  formulaName: AppLocale.t('circulation_pump'),
+                  inputs: {
+                    AppLocale.t('circulation_capacity'):
+                        '${_capacityCtrl.text} ${AppLocale.t(_capacityUnit.labelKey)}',
+                    AppLocale.t('circulation_system_type'):
+                        AppLocale.t(_systemOption.labelKey),
+                    AppLocale.t('circulation_length'):
+                        '${_lengthCtrl.text} m',
+                    AppLocale.t('circulation_width'):
+                        '${_widthCtrl.text} m',
+                    AppLocale.t('circulation_height'):
+                        '${_heightCtrl.text} m',
+                    AppLocale.t('circulation_safety'):
+                        _applySafety ? 'On' : 'Off',
+                  },
+                  outputs: outputs,
+                );
+              },
+            ),
           ],
         ],
       ),
@@ -2912,17 +2848,26 @@ class _ShuntPumpTabState extends State<ShuntPumpTab> {
       _headMss = headMss;
     });
 
-    final prefs = await SharedPreferences.getInstance();
-    final hist = prefs.getStringList('calculation_history') ?? [];
-    hist.add(jsonEncode({
-      'type': AppLocale.t('shunt_pump'),
-      'res':
-          '${flowM3h.toStringAsFixed(2)} m³/h / ${headMss.toStringAsFixed(2)} mSS',
-      'time': DateTime.now().toString(),
-      'inputs':
-          '${AppLocale.t('heat_cap')}: ${power.toStringAsFixed(2)} kW, ${AppLocale.t('building_width')}: ${width.toStringAsFixed(2)} m, ${AppLocale.t('building_length')}: ${length.toStringAsFixed(2)} m, ${AppLocale.t('sys_h')}: ${height.toStringAsFixed(2)} m, ${AppLocale.t('heat_type')}: ${AppLocale.t(heatingType.labelKey)}',
-    }));
-    await prefs.setStringList('calculation_history', hist);
+    final createdAt = DateTime.now();
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'shunt_pump',
+        formulaName: AppLocale.t('shunt_pump'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('heat_cap'): '${power.toStringAsFixed(2)} kW',
+          AppLocale.t('building_width'): '${width.toStringAsFixed(2)} m',
+          AppLocale.t('building_length'): '${length.toStringAsFixed(2)} m',
+          AppLocale.t('sys_h'): '${height.toStringAsFixed(2)} m',
+          AppLocale.t('heat_type'): AppLocale.t(heatingType.labelKey),
+        },
+        outputs: {
+          AppLocale.t('res_flow'): '${flowM3h.toStringAsFixed(2)} m³/h',
+          AppLocale.t('res_press'): '${headMss.toStringAsFixed(2)} mSS',
+        },
+      ),
+    );
   }
 
   @override
@@ -3066,6 +3011,28 @@ class _ShuntPumpTabState extends State<ShuntPumpTab> {
                   value: '${_headMss!.toStringAsFixed(2)} mSS',
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.picture_as_pdf),
+              label: ReadableText(text: AppLocale.t('share_pdf')),
+              onPressed: () => PdfReportService.generateSingleReport(
+                formulaName: AppLocale.t('shunt_pump'),
+                inputs: {
+                  AppLocale.t('heat_cap'): '${_powerCtrl.text} kW',
+                  AppLocale.t('building_width'): '${_widthCtrl.text} m',
+                  AppLocale.t('building_length'): '${_lengthCtrl.text} m',
+                  AppLocale.t('sys_h'): '${_heightCtrl.text} m',
+                  AppLocale.t('heat_type'):
+                      AppLocale.t(_selectedType?.labelKey ?? ''),
+                },
+                outputs: {
+                  AppLocale.t('shunt_flow'):
+                      '${_flowM3h!.toStringAsFixed(2)} m³/h',
+                  AppLocale.t('shunt_head'):
+                      '${_headMss!.toStringAsFixed(2)} mSS',
+                },
+              ),
             ),
           ],
         ],
@@ -3222,15 +3189,28 @@ class _BoilerExpansionTankTabState extends State<BoilerExpansionTankTab> {
       _result = vTank;
     });
 
-    final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList('calculation_history') ?? [];
-    history.add(jsonEncode({
-      'type': AppLocale.t('boiler_expansion_tank'),
-      'res': '${_formatNumber(vTank)} L',
-      'time': DateTime.now().toString(),
-      'inputs': 'Vb: $volume L, Pmin: $pMin bar, Pmax: $pMax bar',
-    }));
-    await prefs.setStringList('calculation_history', history);
+    final createdAt = DateTime.now();
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'boiler_expansion_tank',
+        formulaName: AppLocale.t('boiler_expansion_tank'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('boiler_expansion_volume'): '${_formatNumber(volume)} L',
+          AppLocale.t('boiler_expansion_pmin'):
+              '${_formatNumber(pMin)} ${AppLocale.t('bar_unit')}',
+          AppLocale.t('boiler_expansion_pmax'):
+              '${_formatNumber(pMax)} ${AppLocale.t('bar_unit')}',
+        },
+        outputs: {
+          AppLocale.t('boiler_expansion_result'):
+              '${_formatNumber(vTank)} L',
+          AppLocale.t('boiler_expansion_water'):
+              '${_formatNumber(vExp)} L',
+        },
+      ),
+    );
   }
 
   @override
@@ -3334,6 +3314,29 @@ class _BoilerExpansionTankTabState extends State<BoilerExpansionTankTab> {
                           ?.copyWith(color: Colors.grey),
                     ),
                   ],
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: ReadableText(text: AppLocale.t('share_pdf')),
+                    onPressed: () => PdfReportService.generateSingleReport(
+                      formulaName: AppLocale.t('boiler_expansion_tank'),
+                      inputs: {
+                        AppLocale.t('boiler_expansion_volume'):
+                            '${_volumeCtrl.text} L',
+                        AppLocale.t('boiler_expansion_pmin'):
+                            '${_minPressureCtrl.text} ${AppLocale.t('bar_unit')}',
+                        AppLocale.t('boiler_expansion_pmax'):
+                            '${_maxPressureCtrl.text} ${AppLocale.t('bar_unit')}',
+                      },
+                      outputs: {
+                        AppLocale.t('boiler_expansion_result'):
+                            '${_formatNumber(_result!)} L',
+                        if (_expansionWater != null)
+                          AppLocale.t('boiler_expansion_water'):
+                              '${_formatNumber(_expansionWater!)} L',
+                      },
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -3375,8 +3378,9 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  List<Map<String, dynamic>> _history = [];
-  final Set<int> _selectedIndices = {};
+  List<CalculationHistoryRecord> _history = [];
+  final Set<String> _selectedIds = {};
+  bool _selectionMode = false;
 
   @override
   void initState() {
@@ -3385,35 +3389,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _loadHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> h = prefs.getStringList('calculation_history') ?? [];
+    final history = await CalculationHistoryService.loadRecords();
     if (!mounted) return;
     setState(() {
-      _history = h
-          .map((e) => jsonDecode(e) as Map<String, dynamic>)
-          .toList()
-          .reversed
-          .toList();
+      _history = history;
     });
   }
 
   Future<void> _handleDelete() async {
-    if (_selectedIndices.isNotEmpty) {
-      final prefs = await SharedPreferences.getInstance();
-      List<Map<String, dynamic>> keptHistory = [];
-
-      for (int i = 0; i < _history.length; i++) {
-        if (!_selectedIndices.contains(i)) {
-          keptHistory.add(_history[i]);
-        }
-      }
-
-      final saveList = keptHistory.reversed.map((e) => jsonEncode(e)).toList();
-      await prefs.setStringList('calculation_history', saveList);
-
+    if (_selectedIds.isNotEmpty) {
+      await CalculationHistoryService.removeByIds(_selectedIds);
+      if (!mounted) return;
       setState(() {
-        _history = keptHistory;
-        _selectedIndices.clear();
+        _history.removeWhere((record) => _selectedIds.contains(record.id));
+        _selectedIds.clear();
+        _selectionMode = false;
       });
     } else {
       _showDeleteAllDialog();
@@ -3433,12 +3423,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('calculation_history');
+              await CalculationHistoryService.clearAll();
               if (mounted) {
                 setState(() {
                   _history = [];
-                  _selectedIndices.clear();
+                  _selectedIds.clear();
+                  _selectionMode = false;
                 });
               }
             },
@@ -3452,23 +3442,72 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _toggleSelection(int index) {
+  void _toggleSelection(CalculationHistoryRecord record) {
     setState(() {
-      if (_selectedIndices.contains(index)) {
-        _selectedIndices.remove(index);
+      if (_selectedIds.contains(record.id)) {
+        _selectedIds.remove(record.id);
       } else {
-        _selectedIndices.add(index);
+        _selectedIds.add(record.id);
+      }
+      if (_selectedIds.isEmpty) {
+        _selectionMode = false;
       }
     });
   }
 
+  void _setSelectionMode(bool enabled) {
+    setState(() {
+      _selectionMode = enabled;
+      if (!enabled) {
+        _selectedIds.clear();
+      }
+    });
+  }
+
+  void _selectAll() {
+    setState(() {
+      _selectionMode = true;
+      _selectedIds
+        ..clear()
+        ..addAll(_history.map((record) => record.id));
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedIds.clear();
+      _selectionMode = false;
+    });
+  }
+
   void _exportSelected() {
-    if (_selectedIndices.isEmpty) return;
-    List<Map<String, dynamic>> selectedItems = [];
-    for (int index in _selectedIndices) {
-      selectedItems.add(_history[index]);
-    }
-    PdfService.generateMultiReport(selectedItems);
+    if (_selectedIds.isEmpty) return;
+    final selectedItems = _history
+        .where((record) => _selectedIds.contains(record.id))
+        .toList();
+    PdfReportService.generateMultiReport(selectedItems);
+  }
+
+  String _formatDateTime(DateTime time) {
+    final y = time.year.toString().padLeft(4, '0');
+    final m = time.month.toString().padLeft(2, '0');
+    final d = time.day.toString().padLeft(2, '0');
+    final hh = time.hour.toString().padLeft(2, '0');
+    final mm = time.minute.toString().padLeft(2, '0');
+    return '$y-$m-$d $hh:$mm';
+  }
+
+  String _formatKeyValues(Map<String, dynamic> values) {
+    if (values.isEmpty) return '-';
+    return values.entries
+        .map((entry) => '${entry.key}: ${entry.value}')
+        .join(', ');
+  }
+
+  String _formatSummary(Map<String, dynamic> outputs) {
+    if (outputs.isEmpty) return '-';
+    final entry = outputs.entries.first;
+    return '${entry.key}: ${entry.value}';
   }
 
   @override
@@ -3485,27 +3524,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              _selectedIndices.isEmpty
+              _selectedIds.isEmpty
                   ? Icons.delete_forever_outlined
                   : Icons.delete,
-              color: _selectedIndices.isEmpty ? Colors.grey : Colors.red,
+              color: _selectedIds.isEmpty ? Colors.grey : Colors.red,
             ),
             onPressed: _handleDelete,
-            tooltip: _selectedIndices.isNotEmpty
+            tooltip: _selectedIds.isNotEmpty
                 ? 'Seçilenleri Sil'
                 : 'Geçmişi Temizle',
           ),
         ],
       ),
-      floatingActionButton: _selectedIndices.isNotEmpty
-          ? FloatingActionButton.extended(
-              onPressed: _exportSelected,
-              backgroundColor: const Color(0xFF0052FF),
-              icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-              label: ReadableText(
-                text:
-                    '${AppLocale.t('export_selected')} (${_selectedIndices.length})',
-                style: const TextStyle(color: Colors.white),
+      bottomNavigationBar: _selectedIds.isNotEmpty
+          ? SafeArea(
+              top: false,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: ElevatedButton.icon(
+                  onPressed: _exportSelected,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0052FF),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: ReadableText(
+                    text:
+                        '${AppLocale.t('bulk_pdf')} (${_selectedIds.length})',
+                  ),
+                ),
               ),
             )
           : null,
@@ -3515,103 +3567,161 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 text: AppLocale.t('no_data'),
                 style: GoogleFonts.poppins(color: Colors.grey),
               ))
-          : ListView.builder(
-              padding: const EdgeInsets.only(
-                  left: 16, right: 16, top: 16, bottom: 80),
-              itemCount: _history.length,
-              itemBuilder: (context, index) {
-                final item = _history[index];
-                final dateStr = item['time'] != null
-                    ? item['time']
-                        .toString()
-                        .substring(0, 16)
-                        .replaceAll('T', ' ')
-                    : '---';
-                final inputs = item['inputs'] ?? '---';
-                final isSelected = _selectedIndices.contains(index);
-
-                return GestureDetector(
-                  onTap: () => _toggleSelection(index),
-                  child: Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    color: isSelected
-                        ? const Color(0xFF0052FF).withValues(alpha: 0.08)
-                        : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: isSelected
-                            ? const Color(0xFF0052FF)
-                            : Colors.grey.withValues(alpha: 0.2),
-                        width: isSelected ? 2 : 1,
+          : Column(
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.start,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => _setSelectionMode(!_selectionMode),
+                        child: ReadableText(text: AppLocale.t('select')),
                       ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: ReadableText(
-                                  text: item['type'] ?? 'Hesap',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0052FF)),
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: ReadableText(
-                                      text: dateStr,
-                                      style: const TextStyle(
-                                          fontSize: 12, color: Colors.grey),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Transform.scale(
-                                    scale: 1.2,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      activeColor: const Color(0xFF0052FF),
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(4)),
-                                      onChanged: (v) =>
-                                          _toggleSelection(index),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 24),
-                          ReadableText(
-                              text: '${AppLocale.t('inputs')}:',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey[600])),
-                          ReadableText(
-                              text: inputs,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 12),
-                          ReadableText(
-                              text: '${AppLocale.t('results')}:',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey[600])),
-                          ReadableText(
-                              text: item['res'] ?? '---',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                        ],
+                      OutlinedButton(
+                        onPressed:
+                            _history.isEmpty ? null : _selectAll,
+                        child: ReadableText(text: AppLocale.t('select_all')),
                       ),
-                    ),
+                      OutlinedButton(
+                        onPressed:
+                            _selectedIds.isEmpty ? null : _clearSelection,
+                        child:
+                            ReadableText(text: AppLocale.t('clear_selection')),
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(
+                        left: 16, right: 16, top: 8, bottom: 80),
+                    itemCount: _history.length,
+                    itemBuilder: (context, index) {
+                      final record = _history[index];
+                      final dateStr = _formatDateTime(record.createdAt);
+                      final inputs = _formatKeyValues(record.inputs);
+                      final summary = _formatSummary(record.outputs);
+                      final isSelected = _selectedIds.contains(record.id);
+
+                      return GestureDetector(
+                        onTap: () {
+                          if (_selectionMode || _selectedIds.isNotEmpty) {
+                            _toggleSelection(record);
+                          }
+                        },
+                        onLongPress: () {
+                          if (!_selectionMode) {
+                            _setSelectionMode(true);
+                          }
+                          _toggleSelection(record);
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          color: isSelected
+                              ? const Color(0xFF0052FF).withValues(alpha: 0.08)
+                              : null,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? const Color(0xFF0052FF)
+                                  : Colors.grey.withValues(alpha: 0.2),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (_selectionMode || _selectedIds.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 12),
+                                    child: Transform.scale(
+                                      scale: 1.1,
+                                      child: Checkbox(
+                                        value: isSelected,
+                                        activeColor:
+                                            const Color(0xFF0052FF),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        onChanged: (_) =>
+                                            _toggleSelection(record),
+                                      ),
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: ReadableText(
+                                              text: record.formulaName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF0052FF),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          ReadableText(
+                                            text: dateStr,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Divider(height: 24),
+                                      ReadableText(
+                                        text: '${AppLocale.t('inputs')}:',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600]),
+                                      ),
+                                      ReadableText(
+                                        text: inputs,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ReadableText(
+                                        text: '${AppLocale.t('results')}:',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600]),
+                                      ),
+                                      ReadableText(
+                                        text: summary,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
     );
   }
