@@ -141,6 +141,9 @@ class AppLocale {
       'delete_confirm_title': 'Tüm Geçmişi Sil',
       'delete_confirm_msg':
           'Bütün hesaplama geçmişiniz silinecek. Emin misiniz?',
+      'delete_selected_title': 'Seçili Geçmişi Sil',
+      'delete_selected_msg':
+          'Seçili kayıtlar silinecek. Emin misiniz?',
       'cancel': 'İptal',
       'delete': 'Sil',
       'chart_boiler_x': 'Isıtıcı Gücü (kW)',
@@ -367,6 +370,8 @@ class AppLocale {
       'delete_confirm_title': 'Delete All History',
       'delete_confirm_msg':
           'All calculation history will be deleted. Are you sure?',
+      'delete_selected_title': 'Delete Selected History',
+      'delete_selected_msg': 'Selected records will be deleted. Are you sure?',
       'cancel': 'Cancel',
       'delete': 'Delete',
       'chart_boiler_x': 'Heating Power (kW)',
@@ -595,6 +600,9 @@ class AppLocale {
       'delete_confirm_title': 'Verlauf löschen',
       'delete_confirm_msg':
           'Der gesamte Verlauf wird gelöscht. Sind Sie sicher?',
+      'delete_selected_title': 'Ausgewählten Verlauf löschen',
+      'delete_selected_msg':
+          'Ausgewählte Einträge werden gelöscht. Sind Sie sicher?',
       'cancel': 'Abbrechen',
       'delete': 'Löschen',
       'chart_boiler_x': 'Heizleistung (kW)',
@@ -824,6 +832,9 @@ class AppLocale {
       'record': 'Enregistrement',
       'delete_confirm_title': 'Tout effacer',
       'delete_confirm_msg': 'Tout l\'historique sera effacé. Êtes-vous sûr ?',
+      'delete_selected_title': 'Supprimer la sélection',
+      'delete_selected_msg':
+          'Les éléments sélectionnés seront supprimés. Êtes-vous sûr ?',
       'cancel': 'Annuler',
       'delete': 'Supprimer',
       'chart_boiler_x': 'Puissance (kW)',
