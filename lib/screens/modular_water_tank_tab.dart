@@ -160,158 +160,181 @@ class _ModularWaterTankTabState extends State<ModularWaterTankTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  ReadableText(
-                    text: AppLocale.t('modular_tank_desc'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FocusLabelTextField(
-                          controller: _xCtrl,
-                          keyboardType: TextInputType.number,
-                          labelText: AppLocale.t('modular_tank_width'),
-                          prefixIcon: const Icon(Icons.swap_horiz),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: FocusLabelTextField(
-                          controller: _yCtrl,
-                          keyboardType: TextInputType.number,
-                          labelText: AppLocale.t('modular_tank_length'),
-                          prefixIcon: const Icon(Icons.swap_vert),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  FocusLabelTextField(
-                    controller: _zCtrl,
-                    keyboardType: TextInputType.number,
-                    labelText: AppLocale.t('modular_tank_height'),
-                    prefixIcon: const Icon(Icons.height),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<ModularWaterTankMode>(
-                    value: _mode,
-                    decoration: InputDecoration(
-                      labelText: AppLocale.t('modular_tank_mode'),
-                      prefixIcon: const Icon(Icons.tune),
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    ReadableText(
+                      text: AppLocale.t('modular_tank_desc'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey),
                     ),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _mode = value);
-                    },
-                    items: ModularWaterTankMode.values
-                        .map((mode) => DropdownMenuItem(
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FocusLabelTextField(
+                            controller: _xCtrl,
+                            keyboardType: TextInputType.number,
+                            labelText: AppLocale.t('modular_tank_width'),
+                            prefixIcon: const Icon(Icons.swap_horiz),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: FocusLabelTextField(
+                            controller: _yCtrl,
+                            keyboardType: TextInputType.number,
+                            labelText: AppLocale.t('modular_tank_length'),
+                            prefixIcon: const Icon(Icons.swap_vert),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    FocusLabelTextField(
+                      controller: _zCtrl,
+                      keyboardType: TextInputType.number,
+                      labelText: AppLocale.t('modular_tank_height'),
+                      prefixIcon: const Icon(Icons.height),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<ModularWaterTankMode>(
+                      value: _mode,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: AppLocale.t('modular_tank_mode'),
+                        prefixIcon: const Icon(Icons.tune),
+                      ),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _mode = value);
+                      },
+                      selectedItemBuilder: (context) =>
+                          ModularWaterTankMode.values
+                              .map(
+                                (mode) => Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    _modeLabel(mode),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                      items: ModularWaterTankMode.values
+                          .map(
+                            (mode) => DropdownMenuItem(
                               value: mode,
-                              child: Text(_modeLabel(mode)),
-                            ))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: _calculate,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0052FF),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 60),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                              child: Text(
+                                _modeLabel(mode),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
-                    child: ReadableText(
-                      text: AppLocale.t('calculate'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: _calculate,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0052FF),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 60),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: ReadableText(
+                        text: AppLocale.t('calculate'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton(
-                    onPressed: _clear,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.red),
-                      foregroundColor: Colors.red,
-                      minimumSize: const Size(double.infinity, 60),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 16),
+                    OutlinedButton(
+                      onPressed: _clear,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        foregroundColor: Colors.red,
+                        minimumSize: const Size(double.infinity, 60),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: ReadableText(
+                        text: AppLocale.t('clean'),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    child: ReadableText(
-                      text: AppLocale.t('clean'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          if (_result != null)
-            Container(
-              margin: const EdgeInsets.only(top: 24),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF0052FF), width: 2),
-                borderRadius: BorderRadius.circular(20),
+            if (_result != null)
+              Container(
+                margin: const EdgeInsets.only(top: 24),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFF0052FF), width: 2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  children: [
+                    _resRow(
+                      AppLocale.t('modular_tank_panel_a'),
+                      '${_formatPanelValue(_result!.panelCountA)} ${AppLocale.t('panel_unit')}',
+                      isMain: true,
+                    ),
+                    _resRow(
+                      AppLocale.t('modular_tank_panel_b'),
+                      '${_formatPanelValue(_result!.panelCountB)} ${AppLocale.t('panel_unit')}',
+                      isMain: true,
+                    ),
+                    _resRow(
+                      AppLocale.t('modular_tank_panel_c'),
+                      '${_formatPanelValue(_result!.panelCountC)} ${AppLocale.t('panel_unit')}',
+                      isMain: true,
+                    ),
+                    _resRow(
+                      AppLocale.t('modular_tank_side_panels'),
+                      '${_formatMaybeInt(_result!.sidePanelCount)} ${AppLocale.t('panel_unit')}',
+                    ),
+                    _resRow(
+                      AppLocale.t('modular_tank_volume'),
+                      '${_formatVolume(_result!.volumeLiters)} L',
+                      isMain: true,
+                    ),
+                    const Divider(),
+                    ExpansionTile(
+                      title: ReadableText(
+                          text:
+                              AppLocale.t('modular_tank_effective_dimensions')),
+                      children: [
+                        _resRow(
+                          AppLocale.t('modular_tank_effective_width'),
+                          '${_formatMaybeInt(_result!.effectiveWidthMm)} ${AppLocale.t('mm_unit')}',
+                        ),
+                        _resRow(
+                          AppLocale.t('modular_tank_effective_length'),
+                          '${_formatMaybeInt(_result!.effectiveLengthMm)} ${AppLocale.t('mm_unit')}',
+                        ),
+                        _resRow(
+                          AppLocale.t('modular_tank_effective_height'),
+                          '${_formatMaybeInt(_result!.effectiveHeightMm)} ${AppLocale.t('mm_unit')}',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                children: [
-                  _resRow(
-                    AppLocale.t('modular_tank_panel_a'),
-                    '${_formatPanelValue(_result!.panelCountA)} ${AppLocale.t('panel_unit')}',
-                    isMain: true,
-                  ),
-                  _resRow(
-                    AppLocale.t('modular_tank_panel_b'),
-                    '${_formatPanelValue(_result!.panelCountB)} ${AppLocale.t('panel_unit')}',
-                    isMain: true,
-                  ),
-                  _resRow(
-                    AppLocale.t('modular_tank_panel_c'),
-                    '${_formatPanelValue(_result!.panelCountC)} ${AppLocale.t('panel_unit')}',
-                    isMain: true,
-                  ),
-                  _resRow(
-                    AppLocale.t('modular_tank_side_panels'),
-                    '${_formatMaybeInt(_result!.sidePanelCount)} ${AppLocale.t('panel_unit')}',
-                  ),
-                  _resRow(
-                    AppLocale.t('modular_tank_volume'),
-                    '${_formatVolume(_result!.volumeLiters)} L',
-                    isMain: true,
-                  ),
-                  const Divider(),
-                  ExpansionTile(
-                    title:
-                        ReadableText(text: AppLocale.t('modular_tank_effective_dimensions')),
-                    children: [
-                      _resRow(
-                        AppLocale.t('modular_tank_effective_width'),
-                        '${_formatMaybeInt(_result!.effectiveWidthMm)} ${AppLocale.t('mm_unit')}',
-                      ),
-                      _resRow(
-                        AppLocale.t('modular_tank_effective_length'),
-                        '${_formatMaybeInt(_result!.effectiveLengthMm)} ${AppLocale.t('mm_unit')}',
-                      ),
-                      _resRow(
-                        AppLocale.t('modular_tank_effective_height'),
-                        '${_formatMaybeInt(_result!.effectiveHeightMm)} ${AppLocale.t('mm_unit')}',
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
