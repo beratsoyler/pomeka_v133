@@ -9,6 +9,7 @@ class AppLocale {
       'tank': 'POMPA VE GENLEŞME TANKI',
       'converter': 'BİRİM DÖNÜŞTÜRÜCÜ',
       'recirculation_pump': 'RE-SİRKÜLASYON POMPA SEÇİMİ',
+      'circulation_pump': 'Sirkülasyon Pompası Hesabı',
       'shunt_pump': 'ŞÖNT POMPA SEÇİMİ',
       'modular_tank': 'MODÜLER SU DEPOSU (PANEL DEPO)',
       'fan_coil': 'Fan-coil Hesabı',
@@ -192,10 +193,34 @@ class AppLocale {
       'recirc_heat_loss': 'Isı kaybı (Qw)',
       'recirc_required_flow_lh': 'Gerekli debi (L/h)',
       'recirc_required_flow_m3h': 'Gerekli debi (m³/h)',
+      'circulation_pump_desc':
+          'Isıl kapasiteye göre debi (m³/h) ve hat boyutlarına göre yaklaşık basma yüksekliği (mSS) hesaplanır. Sonuca %10 güvenlik payı eklenebilir.',
+      'circulation_capacity': 'Kapasite değeri',
+      'circulation_capacity_unit': 'Kapasite birimi',
+      'circulation_unit_kw': 'kW',
+      'circulation_unit_kcalh': 'kcal/h',
+      'circulation_system_type': 'Sistem tipi',
+      'circulation_system_radiator': 'Radyatörlü Sistem',
+      'circulation_system_floor': 'Yerden Isıtma',
+      'circulation_length': 'Uzunluk L (m)',
+      'circulation_width': 'Genişlik W (m)',
+      'circulation_height': 'Yükseklik H (m)',
+      'circulation_safety': '%10 güvenlik payı uygula',
+      'circulation_flow': 'Debi (m³/h)',
+      'circulation_flow_safe': 'Güvenlikli Debi (m³/h)',
+      'circulation_head': 'Basma Yüksekliği (mSS)',
+      'circulation_head_safe': 'Güvenlikli Basma Yüksekliği (mSS)',
+      'circulation_selected_x': 'Seçilen X',
+      'circulation_dimensions_note':
+          'Değerler metre olmalıdır (mm girmeyin).',
+      'circulation_dimensions_required': 'Hat boyutları giriniz.',
+      'circulation_dimensions_warning':
+          'Değerler metre olmalıdır (mm girmeyin).',
       'shunt_flow': 'Pompa debisi',
       'shunt_head': 'Pompa basma yüksekliği',
       'err_required': 'değeri gerekli.',
-      'err_invalid_number': 'Geçerli sayı giriniz.'
+      'err_invalid_number': 'Geçerli sayı giriniz.',
+      'err_capacity_positive': 'Kapasite 0’dan büyük olmalıdır.'
     },
     'EN': {
       'hydrofor': 'BOOSTER SYSTEM',
@@ -204,6 +229,7 @@ class AppLocale {
       'tank': 'PUMP & EXPANSION TANK',
       'converter': 'UNIT CONVERTER',
       'recirculation_pump': 'RECIRCULATION PUMP SELECTION',
+      'circulation_pump': 'Circulation Pump Calculation',
       'shunt_pump': 'SHUNT PUMP SELECTION',
       'modular_tank': 'MODULAR WATER TANK (PANEL TANK)',
       'fan_coil': 'Fan-coil Calculation',
@@ -389,10 +415,34 @@ class AppLocale {
       'recirc_heat_loss': 'Heat loss (Qw)',
       'recirc_required_flow_lh': 'Required flow (L/h)',
       'recirc_required_flow_m3h': 'Required flow (m³/h)',
+      'circulation_pump_desc':
+          'Flow rate (m³/h) is calculated from thermal capacity and approximate head (mSS) from line dimensions. A 10% safety margin can be added.',
+      'circulation_capacity': 'Capacity value',
+      'circulation_capacity_unit': 'Capacity unit',
+      'circulation_unit_kw': 'kW',
+      'circulation_unit_kcalh': 'kcal/h',
+      'circulation_system_type': 'System type',
+      'circulation_system_radiator': 'Radiator system',
+      'circulation_system_floor': 'Underfloor heating',
+      'circulation_length': 'Length L (m)',
+      'circulation_width': 'Width W (m)',
+      'circulation_height': 'Height H (m)',
+      'circulation_safety': 'Apply 10% safety margin',
+      'circulation_flow': 'Flow rate (m³/h)',
+      'circulation_flow_safe': 'Safety flow rate (m³/h)',
+      'circulation_head': 'Head (mSS)',
+      'circulation_head_safe': 'Safety head (mSS)',
+      'circulation_selected_x': 'Selected X',
+      'circulation_dimensions_note':
+          'Values must be in meters (do not enter mm).',
+      'circulation_dimensions_required': 'Please enter line dimensions.',
+      'circulation_dimensions_warning':
+          'Values must be in meters (do not enter mm).',
       'shunt_flow': 'Pump flow',
       'shunt_head': 'Pump head',
       'err_required': 'is required.',
-      'err_invalid_number': 'Enter a valid number.'
+      'err_invalid_number': 'Enter a valid number.',
+      'err_capacity_positive': 'Capacity must be greater than 0.'
     },
     'DE': {
       'hydrofor': 'DRUCKERHÖHUNG',
@@ -401,6 +451,7 @@ class AppLocale {
       'tank': 'PUMPE & EXPANSIONSGEFÄSS',
       'converter': 'EINHEITENWANDLER',
       'recirculation_pump': 'REZIRKULATIONSPUMPENAUSWAHL',
+      'circulation_pump': 'Zirkulationspumpenberechnung',
       'shunt_pump': 'SHUNTPUMPENAUSWAHL',
       'modular_tank': 'MODULARER WASSERTANK (PANELTANK)',
       'fan_coil': 'Fan-Coil Berechnung',
@@ -586,10 +637,34 @@ class AppLocale {
       'recirc_heat_loss': 'Wärmeverlust (Qw)',
       'recirc_required_flow_lh': 'Erforderlicher Durchfluss (L/h)',
       'recirc_required_flow_m3h': 'Erforderlicher Durchfluss (m³/h)',
+      'circulation_pump_desc':
+          'Der Durchfluss (m³/h) wird aus der Heizleistung und die Förderhöhe (mSS) aus den Leitungsabmessungen berechnet. Eine 10%-Sicherheitsreserve kann hinzugefügt werden.',
+      'circulation_capacity': 'Leistungswert',
+      'circulation_capacity_unit': 'Leistungseinheit',
+      'circulation_unit_kw': 'kW',
+      'circulation_unit_kcalh': 'kcal/h',
+      'circulation_system_type': 'Systemtyp',
+      'circulation_system_radiator': 'Radiatorsystem',
+      'circulation_system_floor': 'Fußbodenheizung',
+      'circulation_length': 'Länge L (m)',
+      'circulation_width': 'Breite W (m)',
+      'circulation_height': 'Höhe H (m)',
+      'circulation_safety': '10% Sicherheitsreserve anwenden',
+      'circulation_flow': 'Durchfluss (m³/h)',
+      'circulation_flow_safe': 'Sicherheitsdurchfluss (m³/h)',
+      'circulation_head': 'Förderhöhe (mSS)',
+      'circulation_head_safe': 'Sicherheitsförderhöhe (mSS)',
+      'circulation_selected_x': 'Ausgewähltes X',
+      'circulation_dimensions_note':
+          'Werte müssen in Metern sein (kein mm eingeben).',
+      'circulation_dimensions_required': 'Bitte Leitungsabmessungen eingeben.',
+      'circulation_dimensions_warning':
+          'Werte müssen in Metern sein (kein mm eingeben).',
       'shunt_flow': 'Pumpendurchfluss',
       'shunt_head': 'Pumpenförderhöhe',
       'err_required': 'ist erforderlich.',
-      'err_invalid_number': 'Bitte eine gültige Zahl eingeben.'
+      'err_invalid_number': 'Bitte eine gültige Zahl eingeben.',
+      'err_capacity_positive': 'Leistung muss größer als 0 sein.'
     },
     'FR': {
       'hydrofor': 'SURPRESSION',
@@ -598,6 +673,7 @@ class AppLocale {
       'tank': 'POMPE & VASE D\'EXPANSION',
       'converter': 'CONVERTISSEUR',
       'recirculation_pump': 'SÉLECTION DE POMPE DE RE-CIRCULATION',
+      'circulation_pump': 'Calcul de pompe de circulation',
       'shunt_pump': 'SÉLECTION DE POMPE SHUNT',
       'modular_tank': 'RÉSERVOIR D’EAU MODULAIRE (PANNEAUX)',
       'fan_coil': 'Calcul Fan-coil',
@@ -784,10 +860,35 @@ class AppLocale {
       'recirc_heat_loss': 'Perte de chaleur (Qw)',
       'recirc_required_flow_lh': 'Débit requis (L/h)',
       'recirc_required_flow_m3h': 'Débit requis (m³/h)',
+      'circulation_pump_desc':
+          'Le débit (m³/h) est calculé selon la capacité thermique et la hauteur manométrique (mSS) selon les dimensions de ligne. Une marge de sécurité de 10% peut être ajoutée.',
+      'circulation_capacity': 'Valeur de capacité',
+      'circulation_capacity_unit': 'Unité de capacité',
+      'circulation_unit_kw': 'kW',
+      'circulation_unit_kcalh': 'kcal/h',
+      'circulation_system_type': 'Type de système',
+      'circulation_system_radiator': 'Système radiateur',
+      'circulation_system_floor': 'Plancher chauffant',
+      'circulation_length': 'Longueur L (m)',
+      'circulation_width': 'Largeur W (m)',
+      'circulation_height': 'Hauteur H (m)',
+      'circulation_safety': 'Appliquer une marge de sécurité de 10%',
+      'circulation_flow': 'Débit (m³/h)',
+      'circulation_flow_safe': 'Débit de sécurité (m³/h)',
+      'circulation_head': 'Hauteur manométrique (mSS)',
+      'circulation_head_safe': 'Hauteur manométrique de sécurité (mSS)',
+      'circulation_selected_x': 'X sélectionné',
+      'circulation_dimensions_note':
+          'Les valeurs doivent être en mètres (ne pas saisir en mm).',
+      'circulation_dimensions_required':
+          'Veuillez saisir les dimensions de la ligne.',
+      'circulation_dimensions_warning':
+          'Les valeurs doivent être en mètres (ne pas saisir en mm).',
       'shunt_flow': 'Débit de pompe',
       'shunt_head': 'Hauteur manométrique de pompe',
       'err_required': 'est requis.',
-      'err_invalid_number': 'Veuillez saisir un nombre valide.'
+      'err_invalid_number': 'Veuillez saisir un nombre valide.',
+      'err_capacity_positive': 'La capacité doit être supérieure à 0.'
     }
   };
 

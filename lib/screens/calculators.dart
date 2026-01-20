@@ -2412,6 +2412,404 @@ class _RecirculationPumpTabState extends State<RecirculationPumpTab> {
   }
 }
 
+class CirculationPumpTab extends StatefulWidget {
+  const CirculationPumpTab({super.key});
+
+  @override
+  State<CirculationPumpTab> createState() => _CirculationPumpTabState();
+}
+
+class _CirculationPumpTabState extends State<CirculationPumpTab> {
+  static const double _kwToKcalH = 859.85;
+  static const double _xRadiator = 20000;
+  static const double _xFloor = 10000;
+  static const double _safety = 1.10;
+  static const double _headCoeff = 0.05;
+
+  final TextEditingController _capacityCtrl = TextEditingController();
+  final TextEditingController _lengthCtrl = TextEditingController();
+  final TextEditingController _widthCtrl = TextEditingController();
+  final TextEditingController _heightCtrl = TextEditingController();
+
+  late _CapacityUnit _capacityUnit;
+  late _CirculationSystemOption _systemOption;
+  bool _applySafety = true;
+
+  double? _flow;
+  double? _flowSafe;
+  double? _head;
+  double? _headSafe;
+  double? _selectedX;
+
+  final List<_CapacityUnit> _capacityUnits = const [
+    _CapacityUnit(labelKey: 'circulation_unit_kw', isKw: true),
+    _CapacityUnit(labelKey: 'circulation_unit_kcalh', isKw: false),
+  ];
+
+  final List<_CirculationSystemOption> _systemOptions = const [
+    _CirculationSystemOption(
+      labelKey: 'circulation_system_radiator',
+      xValue: _xRadiator,
+    ),
+    _CirculationSystemOption(
+      labelKey: 'circulation_system_floor',
+      xValue: _xFloor,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _capacityUnit = _capacityUnits.first;
+    _systemOption = _systemOptions.first;
+  }
+
+  @override
+  void dispose() {
+    _capacityCtrl.dispose();
+    _lengthCtrl.dispose();
+    _widthCtrl.dispose();
+    _heightCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clear() {
+    setState(() {
+      _capacityCtrl.clear();
+      _lengthCtrl.clear();
+      _widthCtrl.clear();
+      _heightCtrl.clear();
+      _capacityUnit = _capacityUnits.first;
+      _systemOption = _systemOptions.first;
+      _applySafety = true;
+      _flow = null;
+      _flowSafe = null;
+      _head = null;
+      _headSafe = null;
+      _selectedX = null;
+    });
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  double? _readCapacity() {
+    final label = AppLocale.t('circulation_capacity');
+    final text = _capacityCtrl.text.trim();
+    if (text.isEmpty) {
+      _showMessage('$label ${AppLocale.t('err_required')}');
+      return null;
+    }
+    final value = double.tryParse(text.replaceAll(',', '.'));
+    if (value == null) {
+      _showMessage('$label: ${AppLocale.t('err_invalid_number')}');
+      return null;
+    }
+    if (value <= 0) {
+      _showMessage(AppLocale.t('err_capacity_positive'));
+      return null;
+    }
+    return value;
+  }
+
+  double? _readDimension(TextEditingController controller, String labelKey) {
+    final label = AppLocale.t(labelKey);
+    final text = controller.text.trim();
+    if (text.isEmpty) {
+      _showMessage('$label ${AppLocale.t('err_required')}');
+      return null;
+    }
+    final value = double.tryParse(text.replaceAll(',', '.'));
+    if (value == null) {
+      _showMessage('$label: ${AppLocale.t('err_invalid_number')}');
+      return null;
+    }
+    if (value < 0) {
+      _showMessage('$label: ${AppLocale.t('err_negative')}');
+      return null;
+    }
+    return value;
+  }
+
+  Future<void> _calculate() async {
+    final capacity = _readCapacity();
+    if (capacity == null) return;
+    final length = _readDimension(_lengthCtrl, 'circulation_length');
+    if (length == null) return;
+    final width = _readDimension(_widthCtrl, 'circulation_width');
+    if (width == null) return;
+    final height = _readDimension(_heightCtrl, 'circulation_height');
+    if (height == null) return;
+
+    final capKcalH =
+        _capacityUnit.isKw ? capacity * _kwToKcalH : capacity;
+    final selectedX = _systemOption.xValue;
+    final flow = capKcalH / selectedX;
+    final head = (length + width + height) * _headCoeff;
+    final flowSafe = _applySafety ? flow * _safety : null;
+    final headSafe = _applySafety ? head * _safety : null;
+
+    if (length == 0 && width == 0 && height == 0) {
+      _showMessage(AppLocale.t('circulation_dimensions_required'));
+    } else if (length > 1000 || width > 1000 || height > 1000) {
+      _showMessage(AppLocale.t('circulation_dimensions_warning'));
+    }
+
+    setState(() {
+      _flow = flow;
+      _flowSafe = flowSafe;
+      _head = head;
+      _headSafe = headSafe;
+      _selectedX = selectedX;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    final history = prefs.getStringList('calculation_history') ?? [];
+    final safetySuffix = _applySafety
+        ? ' / ${flowSafe!.toStringAsFixed(3)} m³/h / ${headSafe!.toStringAsFixed(3)} mSS'
+        : '';
+    history.add(jsonEncode({
+      'type': AppLocale.t('circulation_pump'),
+      'res':
+          '${flow.toStringAsFixed(3)} m³/h / ${head.toStringAsFixed(3)} mSS$safetySuffix',
+      'time': DateTime.now().toString(),
+      'inputs':
+          '${AppLocale.t('circulation_capacity')}: ${capacity.toStringAsFixed(2)} ${AppLocale.t(_capacityUnit.labelKey)}, '
+              '${AppLocale.t('circulation_system_type')}: ${AppLocale.t(_systemOption.labelKey)}, '
+              '${AppLocale.t('circulation_length')}: ${length.toStringAsFixed(2)} m, '
+              '${AppLocale.t('circulation_width')}: ${width.toStringAsFixed(2)} m, '
+              '${AppLocale.t('circulation_height')}: ${height.toStringAsFixed(2)} m, '
+              '${AppLocale.t('circulation_safety')}: ${_applySafety ? 'On' : 'Off'}',
+    }));
+    await prefs.setStringList('calculation_history', history);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final resultVisible = _flow != null && _head != null && _selectedX != null;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ReadableText(
+                    text: AppLocale.t('circulation_pump_desc'),
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: FocusLabelTextField(
+                          controller: _capacityCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          labelText: AppLocale.t('circulation_capacity'),
+                          labelWidget: TappableLabel(
+                            text: AppLocale.t('circulation_capacity'),
+                          ),
+                          prefixIcon: const Icon(Icons.bolt),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<_CapacityUnit>(
+                          value: _capacityUnit,
+                          decoration: InputDecoration(
+                            label: TappableLabel(
+                              text: AppLocale.t('circulation_capacity_unit'),
+                            ),
+                            prefixIcon: const Icon(Icons.straighten),
+                          ),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _capacityUnit = value);
+                          },
+                          items: _capacityUnits
+                              .map((unit) => DropdownMenuItem(
+                                    value: unit,
+                                    child: Text(AppLocale.t(unit.labelKey)),
+                                  ))
+                              .toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<_CirculationSystemOption>(
+                    value: _systemOption,
+                    decoration: InputDecoration(
+                      label:
+                          TappableLabel(text: AppLocale.t('circulation_system_type')),
+                      prefixIcon: const Icon(Icons.thermostat),
+                    ),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _systemOption = value);
+                    },
+                    items: _systemOptions
+                        .map((option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(AppLocale.t(option.labelKey)),
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FocusLabelTextField(
+                          controller: _lengthCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          labelText: AppLocale.t('circulation_length'),
+                          labelWidget: TappableLabel(
+                            text: AppLocale.t('circulation_length'),
+                          ),
+                          prefixIcon: const Icon(Icons.straighten),
+                          suffixText: 'm',
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: FocusLabelTextField(
+                          controller: _widthCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          labelText: AppLocale.t('circulation_width'),
+                          labelWidget: TappableLabel(
+                            text: AppLocale.t('circulation_width'),
+                          ),
+                          prefixIcon: const Icon(Icons.swap_horiz),
+                          suffixText: 'm',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _heightCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('circulation_height'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('circulation_height')),
+                    prefixIcon: const Icon(Icons.height),
+                    suffixText: 'm',
+                  ),
+                  const SizedBox(height: 8),
+                  ReadableText(
+                    text: AppLocale.t('circulation_dimensions_note'),
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: ReadableText(text: AppLocale.t('circulation_safety')),
+                    value: _applySafety,
+                    onChanged: (value) =>
+                        setState(() => _applySafety = value),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _clear,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('clean')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _calculate,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            backgroundColor: const Color(0xFF0052FF),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('calculate')),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (resultVisible) ...[
+            const SizedBox(height: 20),
+            _ResultCard(
+              rows: [
+                _ResultRow(
+                  label: AppLocale.t('circulation_flow'),
+                  value: '${_flow!.toStringAsFixed(3)} m³/h',
+                ),
+                if (_applySafety && _flowSafe != null)
+                  _ResultRow(
+                    label: AppLocale.t('circulation_flow_safe'),
+                    value: '${_flowSafe!.toStringAsFixed(3)} m³/h',
+                  ),
+                _ResultRow(
+                  label: AppLocale.t('circulation_head'),
+                  value: '${_head!.toStringAsFixed(3)} mSS',
+                ),
+                if (_applySafety && _headSafe != null)
+                  _ResultRow(
+                    label: AppLocale.t('circulation_head_safe'),
+                    value: '${_headSafe!.toStringAsFixed(3)} mSS',
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ReadableText(
+              text:
+                  '${AppLocale.t('circulation_selected_x')}: ${_selectedX!.toStringAsFixed(0)} (${AppLocale.t(_systemOption.labelKey)})',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CapacityUnit {
+  final String labelKey;
+  final bool isKw;
+
+  const _CapacityUnit({required this.labelKey, required this.isKw});
+}
+
+class _CirculationSystemOption {
+  final String labelKey;
+  final double xValue;
+
+  const _CirculationSystemOption({
+    required this.labelKey,
+    required this.xValue,
+  });
+}
+
 class ShuntPumpTab extends StatefulWidget {
   const ShuntPumpTab({super.key});
 
