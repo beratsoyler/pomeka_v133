@@ -1,11 +1,11 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../localization/app_locale.dart';
+import '../models/calculation_history_record.dart';
 import '../models/modular_water_tank_result.dart';
+import '../services/calculation_history_service.dart';
 import '../services/modular_water_tank_calculator.dart';
+import '../services/pdf_report_service.dart';
 import '../widgets/focus_label_text_field.dart';
 import '../widgets/readable_text.dart';
 
@@ -82,16 +82,39 @@ class _ModularWaterTankTabState extends State<ModularWaterTankTab> {
       );
       setState(() => _result = result);
 
-      final prefs = await SharedPreferences.getInstance();
-      final hist = prefs.getStringList('calculation_history') ?? [];
-      hist.add(jsonEncode({
-        'type': AppLocale.t('modular_tank'),
-        'res': '${_formatVolume(result.volumeLiters)} L',
-        'time': DateTime.now().toString(),
-        'inputs':
-            'X: ${_xCtrl.text} mm, Y: ${_yCtrl.text} mm, Z: ${_zCtrl.text} mm, ${AppLocale.t('modular_tank_mode')}: ${_modeLabel(_mode)}'
-      }));
-      await prefs.setStringList('calculation_history', hist);
+      final createdAt = DateTime.now();
+      await CalculationHistoryService.append(
+        CalculationHistoryRecord(
+          id: createdAt.microsecondsSinceEpoch.toString(),
+          formulaId: 'modular_tank',
+          formulaName: AppLocale.t('modular_tank'),
+          createdAt: createdAt,
+          inputs: {
+            AppLocale.t('modular_tank_width'): '${_xCtrl.text} mm',
+            AppLocale.t('modular_tank_length'): '${_yCtrl.text} mm',
+            AppLocale.t('modular_tank_height'): '${_zCtrl.text} mm',
+            AppLocale.t('modular_tank_mode'): _modeLabel(_mode),
+          },
+          outputs: {
+            AppLocale.t('modular_tank_volume'):
+                '${_formatVolume(result.volumeLiters)} L',
+            AppLocale.t('modular_tank_panel_a'):
+                '${_formatPanelValue(result.panelCountA)} ${AppLocale.t('panel_unit')}',
+            AppLocale.t('modular_tank_panel_b'):
+                '${_formatPanelValue(result.panelCountB)} ${AppLocale.t('panel_unit')}',
+            AppLocale.t('modular_tank_panel_c'):
+                '${_formatPanelValue(result.panelCountC)} ${AppLocale.t('panel_unit')}',
+            AppLocale.t('modular_tank_side_panels'):
+                '${_formatMaybeInt(result.sidePanelCount)} ${AppLocale.t('panel_unit')}',
+            AppLocale.t('modular_tank_effective_width'):
+                '${_formatMaybeInt(result.effectiveWidthMm)} ${AppLocale.t('mm_unit')}',
+            AppLocale.t('modular_tank_effective_length'):
+                '${_formatMaybeInt(result.effectiveLengthMm)} ${AppLocale.t('mm_unit')}',
+            AppLocale.t('modular_tank_effective_height'):
+                '${_formatMaybeInt(result.effectiveHeightMm)} ${AppLocale.t('mm_unit')}',
+          },
+        ),
+      );
     } on ModularWaterTankValidationException catch (e) {
       setState(() => _result = null);
       if (e.error == ModularWaterTankValidationError.dimensionsTooSmall) {
@@ -329,6 +352,41 @@ class _ModularWaterTankTabState extends State<ModularWaterTankTab> {
                           '${_formatMaybeInt(_result!.effectiveHeightMm)} ${AppLocale.t('mm_unit')}',
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.picture_as_pdf),
+                      label: ReadableText(text: AppLocale.t('share_pdf')),
+                      onPressed: () => PdfReportService.generateSingleReport(
+                        formulaName: AppLocale.t('modular_tank'),
+                        inputs: {
+                          AppLocale.t('modular_tank_width'):
+                              '${_xCtrl.text} mm',
+                          AppLocale.t('modular_tank_length'):
+                              '${_yCtrl.text} mm',
+                          AppLocale.t('modular_tank_height'):
+                              '${_zCtrl.text} mm',
+                          AppLocale.t('modular_tank_mode'): _modeLabel(_mode),
+                        },
+                        outputs: {
+                          AppLocale.t('modular_tank_volume'):
+                              '${_formatVolume(_result!.volumeLiters)} L',
+                          AppLocale.t('modular_tank_panel_a'):
+                              '${_formatPanelValue(_result!.panelCountA)} ${AppLocale.t('panel_unit')}',
+                          AppLocale.t('modular_tank_panel_b'):
+                              '${_formatPanelValue(_result!.panelCountB)} ${AppLocale.t('panel_unit')}',
+                          AppLocale.t('modular_tank_panel_c'):
+                              '${_formatPanelValue(_result!.panelCountC)} ${AppLocale.t('panel_unit')}',
+                          AppLocale.t('modular_tank_side_panels'):
+                              '${_formatMaybeInt(_result!.sidePanelCount)} ${AppLocale.t('panel_unit')}',
+                          AppLocale.t('modular_tank_effective_width'):
+                              '${_formatMaybeInt(_result!.effectiveWidthMm)} ${AppLocale.t('mm_unit')}',
+                          AppLocale.t('modular_tank_effective_length'):
+                              '${_formatMaybeInt(_result!.effectiveLengthMm)} ${AppLocale.t('mm_unit')}',
+                          AppLocale.t('modular_tank_effective_height'):
+                              '${_formatMaybeInt(_result!.effectiveHeightMm)} ${AppLocale.t('mm_unit')}',
+                        },
+                      ),
                     ),
                   ],
                 ),
