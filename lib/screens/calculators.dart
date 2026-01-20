@@ -3380,7 +3380,6 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   List<CalculationHistoryRecord> _history = [];
   final Set<String> _selectedIds = {};
-  bool _selectionMode = false;
 
   @override
   void initState() {
@@ -3394,20 +3393,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() {
       _history = history;
     });
-  }
-
-  Future<void> _handleDelete() async {
-    if (_selectedIds.isNotEmpty) {
-      await CalculationHistoryService.removeByIds(_selectedIds);
-      if (!mounted) return;
-      setState(() {
-        _history.removeWhere((record) => _selectedIds.contains(record.id));
-        _selectedIds.clear();
-        _selectionMode = false;
-      });
-    } else {
-      _showDeleteAllDialog();
-    }
   }
 
   void _showDeleteAllDialog() {
@@ -3428,7 +3413,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 setState(() {
                   _history = [];
                   _selectedIds.clear();
-                  _selectionMode = false;
                 });
               }
             },
@@ -3449,34 +3433,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       } else {
         _selectedIds.add(record.id);
       }
-      if (_selectedIds.isEmpty) {
-        _selectionMode = false;
-      }
-    });
-  }
-
-  void _setSelectionMode(bool enabled) {
-    setState(() {
-      _selectionMode = enabled;
-      if (!enabled) {
-        _selectedIds.clear();
-      }
-    });
-  }
-
-  void _selectAll() {
-    setState(() {
-      _selectionMode = true;
-      _selectedIds
-        ..clear()
-        ..addAll(_history.map((record) => record.id));
     });
   }
 
   void _clearSelection() {
     setState(() {
       _selectedIds.clear();
-      _selectionMode = false;
     });
   }
 
@@ -3486,6 +3448,42 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .where((record) => _selectedIds.contains(record.id))
         .toList();
     PdfReportService.generateMultiReport(selectedItems);
+  }
+
+  void _confirmDeleteSelected() {
+    if (_selectedIds.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: ReadableText(text: AppLocale.t('delete_selected_title')),
+        content: ReadableText(
+          text: AppLocale.t('delete_selected_msg'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: ReadableText(text: AppLocale.t('cancel')),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await CalculationHistoryService.removeByIds(_selectedIds);
+              if (!mounted) return;
+              setState(() {
+                _history.removeWhere(
+                  (record) => _selectedIds.contains(record.id),
+                );
+                _selectedIds.clear();
+              });
+            },
+            child: ReadableText(
+              text: AppLocale.t('delete'),
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatDateTime(DateTime time) {
@@ -3522,206 +3520,167 @@ class _HistoryScreenState extends State<HistoryScreen> {
           textAlign: TextAlign.center,
         ),
         actions: [
-          IconButton(
-            icon: Icon(
-              _selectedIds.isEmpty
-                  ? Icons.delete_forever_outlined
-                  : Icons.delete,
-              color: _selectedIds.isEmpty ? Colors.grey : Colors.red,
-            ),
-            onPressed: _handleDelete,
-            tooltip: _selectedIds.isNotEmpty
-                ? 'Seçilenleri Sil'
-                : 'Geçmişi Temizle',
-          ),
-        ],
-      ),
-      bottomNavigationBar: _selectedIds.isNotEmpty
-          ? SafeArea(
-              top: false,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: ElevatedButton.icon(
-                  onPressed: _exportSelected,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0052FF),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(Icons.picture_as_pdf),
+          if (_selectedIds.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Chip(
                   label: ReadableText(
                     text:
-                        '${AppLocale.t('bulk_pdf')} (${_selectedIds.length})',
+                        '${_selectedIds.length} ${AppLocale.t('selected_count')}',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: const Color(0xFF0052FF),
+                  side: BorderSide(
+                    color: const Color(0xFF0052FF).withValues(alpha: 0.6),
                   ),
                 ),
               ),
-            )
-          : null,
+            ),
+          IconButton(
+            icon: Icon(
+              _selectedIds.isNotEmpty ? Icons.close : Icons.delete_forever_outlined,
+              color: _selectedIds.isNotEmpty ? Colors.white70 : Colors.grey,
+            ),
+            onPressed:
+                _selectedIds.isNotEmpty ? _clearSelection : _showDeleteAllDialog,
+            tooltip: _selectedIds.isNotEmpty
+                ? AppLocale.t('clear_selection')
+                : AppLocale.t('clear_history'),
+          ),
+        ],
+      ),
+      floatingActionButton: _selectedIds.isEmpty
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'history_pdf',
+                  mini: true,
+                  backgroundColor: const Color(0xFF0052FF),
+                  onPressed: _exportSelected,
+                  child: const Icon(Icons.picture_as_pdf),
+                ),
+                const SizedBox(height: 12),
+                FloatingActionButton(
+                  heroTag: 'history_delete',
+                  mini: true,
+                  backgroundColor: Colors.red,
+                  onPressed: _confirmDeleteSelected,
+                  child: const Icon(Icons.delete),
+                ),
+              ],
+            ),
       body: _history.isEmpty
           ? Center(
               child: ReadableText(
                 text: AppLocale.t('no_data'),
                 style: GoogleFonts.poppins(color: Colors.grey),
               ))
-          : Column(
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.start,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () => _setSelectionMode(!_selectionMode),
-                        child: ReadableText(text: AppLocale.t('select')),
-                      ),
-                      OutlinedButton(
-                        onPressed:
-                            _history.isEmpty ? null : _selectAll,
-                        child: ReadableText(text: AppLocale.t('select_all')),
-                      ),
-                      OutlinedButton(
-                        onPressed:
-                            _selectedIds.isEmpty ? null : _clearSelection,
-                        child:
-                            ReadableText(text: AppLocale.t('clear_selection')),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(
-                        left: 16, right: 16, top: 8, bottom: 80),
-                    itemCount: _history.length,
-                    itemBuilder: (context, index) {
-                      final record = _history[index];
-                      final dateStr = _formatDateTime(record.createdAt);
-                      final inputs = _formatKeyValues(record.inputs);
-                      final summary = _formatSummary(record.outputs);
-                      final isSelected = _selectedIds.contains(record.id);
+          : ListView.builder(
+              padding: const EdgeInsets.only(
+                  left: 16, right: 16, top: 8, bottom: 120),
+              itemCount: _history.length,
+              itemBuilder: (context, index) {
+                final record = _history[index];
+                final dateStr = _formatDateTime(record.createdAt);
+                final inputs = _formatKeyValues(record.inputs);
+                final summary = _formatSummary(record.outputs);
+                final isSelected = _selectedIds.contains(record.id);
 
-                      return GestureDetector(
-                        onTap: () {
-                          if (_selectionMode || _selectedIds.isNotEmpty) {
-                            _toggleSelection(record);
-                          }
-                        },
-                        onLongPress: () {
-                          if (!_selectionMode) {
-                            _setSelectionMode(true);
-                          }
-                          _toggleSelection(record);
-                        },
-                        child: Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          color: isSelected
-                              ? const Color(0xFF0052FF).withValues(alpha: 0.08)
-                              : null,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? const Color(0xFF0052FF)
-                                  : Colors.grey.withValues(alpha: 0.2),
-                              width: isSelected ? 2 : 1,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (_selectionMode || _selectedIds.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 12),
-                                    child: Transform.scale(
-                                      scale: 1.1,
-                                      child: Checkbox(
-                                        value: isSelected,
-                                        activeColor:
-                                            const Color(0xFF0052FF),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        onChanged: (_) =>
-                                            _toggleSelection(record),
-                                      ),
-                                    ),
-                                  ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: ReadableText(
-                                              text: record.formulaName,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF0052FF),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          ReadableText(
-                                            text: dateStr,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const Divider(height: 24),
-                                      ReadableText(
-                                        text: '${AppLocale.t('inputs')}:',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600]),
-                                      ),
-                                      ReadableText(
-                                        text: inputs,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w500),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      ReadableText(
-                                        text: '${AppLocale.t('results')}:',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600]),
-                                      ),
-                                      ReadableText(
-                                        text: summary,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  color: isSelected
+                      ? const Color(0xFF0052FF).withValues(alpha: 0.08)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF0052FF)
+                          : Colors.grey.withValues(alpha: 0.2),
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Transform.scale(
+                            scale: 1.1,
+                            child: Checkbox(
+                              value: isSelected,
+                              activeColor: const Color(0xFF0052FF),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              onChanged: (_) => _toggleSelection(record),
                             ),
                           ),
                         ),
-                      );
-                    },
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: ReadableText(
+                                      text: record.formulaName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0052FF),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ReadableText(
+                                    text: dateStr,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Divider(height: 24),
+                              ReadableText(
+                                text: '${AppLocale.t('inputs')}:',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600]),
+                              ),
+                              ReadableText(
+                                text: inputs,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: 12),
+                              ReadableText(
+                                text: '${AppLocale.t('results')}:',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600]),
+                              ),
+                              ReadableText(
+                                text: summary,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                );
+              },
             ),
     );
   }
