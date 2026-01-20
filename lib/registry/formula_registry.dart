@@ -94,6 +94,18 @@ class FormulaRegistry {
       ),
     ),
     FormulaMeta(
+      id: 'circulation_pump',
+      titleKey: 'circulation_pump',
+      categoryId: categoryPumps,
+      icon: Icons.sync_alt,
+      tags: const ['pump', 'circulation', 'flow', 'head'],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'circulation_pump',
+        titleKey: 'circulation_pump',
+        child: CirculationPumpTab(),
+      ),
+    ),
+    FormulaMeta(
       id: 'shunt_pump',
       titleKey: 'shunt_pump',
       categoryId: categoryPumps,
