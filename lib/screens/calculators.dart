@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../kazan_tesisat_calculator.dart';
 import '../localization/app_locale.dart';
 import '../models/formula_transfer_data.dart';
+import '../services/fan_coil_calculator.dart';
 import '../services/pump_expansion_calculator.dart';
 import '../state/app_state.dart';
 import '../widgets/focus_label_text_field.dart';
@@ -1914,6 +1915,319 @@ class _TankTabState extends State<TankTab> {
       ),
     );
   }
+}
+
+class FanCoilTab extends StatefulWidget {
+  const FanCoilTab({super.key});
+
+  @override
+  State<FanCoilTab> createState() => _FanCoilTabState();
+}
+
+class _FanCoilTabState extends State<FanCoilTab> {
+  final TextEditingController _areaCtrl = TextEditingController();
+  FanCoilPipeType _pipeType = FanCoilPipeType.twoPipe;
+  FanCoilUsageType _usageType = FanCoilUsageType.office;
+  FanCoilCalculationMode _calcMode = FanCoilCalculationMode.cooling;
+  FanCoilResult? _result;
+
+  @override
+  void dispose() {
+    _areaCtrl.dispose();
+    super.dispose();
+  }
+
+  void _clear() {
+    setState(() {
+      _areaCtrl.clear();
+      _pipeType = FanCoilPipeType.twoPipe;
+      _usageType = FanCoilUsageType.office;
+      _calcMode = FanCoilCalculationMode.cooling;
+      _result = null;
+    });
+  }
+
+  double _parseDouble(String value) {
+    if (value.trim().isEmpty) {
+      return double.nan;
+    }
+    return double.tryParse(value.replaceAll(',', '.')) ?? double.nan;
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  void _onPipeTypeChanged(FanCoilPipeType? value) {
+    if (value == null) return;
+    final wasBoth = _calcMode == FanCoilCalculationMode.both;
+    setState(() {
+      _pipeType = value;
+      if (_pipeType == FanCoilPipeType.twoPipe &&
+          _calcMode == FanCoilCalculationMode.both) {
+        _calcMode = FanCoilCalculationMode.cooling;
+      }
+    });
+    if (value == FanCoilPipeType.twoPipe && wasBoth) {
+      _showError(AppLocale.t('fan_coil_two_pipe_warning'));
+    }
+  }
+
+  Future<void> _calculate() async {
+    final area = _parseDouble(_areaCtrl.text);
+    if (area.isNaN) {
+      _showError(AppLocale.t('err_invalid_number'));
+      return;
+    }
+    if (area <= 0) {
+      _showError(AppLocale.t('err_area_positive'));
+      return;
+    }
+
+    final result = FanCoilCalculator.compute(
+      areaM2: area,
+      usageType: _usageType,
+    );
+
+    setState(() => _result = result);
+
+    final prefs = await SharedPreferences.getInstance();
+    final hist = prefs.getStringList('calculation_history') ?? [];
+    hist.add(jsonEncode({
+      'type': AppLocale.t('fan_coil'),
+      'res': _formatResultSummary(result),
+      'time': DateTime.now().toString(),
+      'inputs':
+          '${AppLocale.t('fan_coil_pipe_type')}: ${_pipeTypeLabel(_pipeType)}, ${AppLocale.t('fan_coil_area')}: ${area.toStringAsFixed(2)} m², ${AppLocale.t('fan_coil_usage_type')}: ${_usageTypeLabel(_usageType)}, ${AppLocale.t('fan_coil_calc_type')}: ${_calcModeLabel(_calcMode)}',
+    }));
+    await prefs.setStringList('calculation_history', hist);
+  }
+
+  String _formatResultSummary(FanCoilResult result) {
+    switch (_calcMode) {
+      case FanCoilCalculationMode.cooling:
+        return '${AppLocale.t('fan_coil_cooling_capacity')}: ${result.qCoolKw.toStringAsFixed(2)} kW';
+      case FanCoilCalculationMode.heating:
+        return '${AppLocale.t('fan_coil_heating_capacity')}: ${result.qHeatKw.toStringAsFixed(2)} kW';
+      case FanCoilCalculationMode.both:
+        return '${AppLocale.t('fan_coil_cooling_capacity')}: ${result.qCoolKw.toStringAsFixed(2)} kW / ${AppLocale.t('fan_coil_heating_capacity')}: ${result.qHeatKw.toStringAsFixed(2)} kW';
+    }
+  }
+
+  String _pipeTypeLabel(FanCoilPipeType type) {
+    switch (type) {
+      case FanCoilPipeType.twoPipe:
+        return AppLocale.t('fan_coil_two_pipe');
+      case FanCoilPipeType.fourPipe:
+        return AppLocale.t('fan_coil_four_pipe');
+    }
+  }
+
+  String _usageTypeLabel(FanCoilUsageType type) {
+    switch (type) {
+      case FanCoilUsageType.insulatedResidential:
+        return AppLocale.t('fan_coil_usage_insulated');
+      case FanCoilUsageType.midInsulatedResidential:
+        return AppLocale.t('fan_coil_usage_mid_insulated');
+      case FanCoilUsageType.office:
+        return AppLocale.t('fan_coil_usage_office');
+      case FanCoilUsageType.shopShowcase:
+        return AppLocale.t('fan_coil_usage_shop_showcase');
+    }
+  }
+
+  String _calcModeLabel(FanCoilCalculationMode mode) {
+    switch (mode) {
+      case FanCoilCalculationMode.cooling:
+        return AppLocale.t('fan_coil_calc_cooling');
+      case FanCoilCalculationMode.heating:
+        return AppLocale.t('fan_coil_calc_heating');
+      case FanCoilCalculationMode.both:
+        return AppLocale.t('fan_coil_calc_both');
+    }
+  }
+
+  List<FanCoilCalculationMode> _availableModes() {
+    if (_pipeType == FanCoilPipeType.twoPipe) {
+      return const [
+        FanCoilCalculationMode.cooling,
+        FanCoilCalculationMode.heating
+      ];
+    }
+    return const [
+      FanCoilCalculationMode.cooling,
+      FanCoilCalculationMode.heating,
+      FanCoilCalculationMode.both
+    ];
+  }
+
+  List<_ResultRow> _resultRows(FanCoilResult result) {
+    final rows = <_ResultRow>[];
+    if (_calcMode == FanCoilCalculationMode.cooling ||
+        _calcMode == FanCoilCalculationMode.both) {
+      rows.add(_ResultRow(
+        label: AppLocale.t('fan_coil_cooling_capacity'),
+        value: '${result.qCoolKw.toStringAsFixed(2)} kW',
+      ));
+    }
+    if (_calcMode == FanCoilCalculationMode.heating ||
+        _calcMode == FanCoilCalculationMode.both) {
+      rows.add(_ResultRow(
+        label: AppLocale.t('fan_coil_heating_capacity'),
+        value: '${result.qHeatKw.toStringAsFixed(2)} kW',
+      ));
+    }
+    return rows;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = _result;
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    ReadableText(
+                      text: AppLocale.t('fan_coil_desc'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<FanCoilPipeType>(
+                      value: _pipeType,
+                      decoration: InputDecoration(
+                        label: TappableLabel(
+                            text: AppLocale.t('fan_coil_pipe_type')),
+                        prefixIcon: const Icon(Icons.commit),
+                      ),
+                      onChanged: _onPipeTypeChanged,
+                      items: FanCoilPipeType.values
+                          .map((type) => DropdownMenuItem(
+                                value: type,
+                                child: Text(_pipeTypeLabel(type)),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    FocusLabelTextField(
+                      controller: _areaCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      labelText: AppLocale.t('fan_coil_area'),
+                      labelWidget:
+                          TappableLabel(text: AppLocale.t('fan_coil_area')),
+                      prefixIcon: const Icon(Icons.square_foot),
+                      suffixText: 'm²',
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<FanCoilUsageType>(
+                      value: _usageType,
+                      decoration: InputDecoration(
+                        label: TappableLabel(
+                            text: AppLocale.t('fan_coil_usage_type')),
+                        prefixIcon: const Icon(Icons.home_work),
+                      ),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _usageType = value);
+                      },
+                      items: FanCoilUsageType.values
+                          .map((type) => DropdownMenuItem(
+                                value: type,
+                                child: Text(_usageTypeLabel(type)),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<FanCoilCalculationMode>(
+                      value: _calcMode,
+                      decoration: InputDecoration(
+                        label: TappableLabel(
+                            text: AppLocale.t('fan_coil_calc_type')),
+                        prefixIcon: const Icon(Icons.tune),
+                      ),
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _calcMode = value);
+                      },
+                      items: _availableModes()
+                          .map((mode) => DropdownMenuItem(
+                                value: mode,
+                                child: Text(_calcModeLabel(mode)),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _clear,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: ReadableText(text: AppLocale.t('clean')),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: _calculate,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 52),
+                              backgroundColor: const Color(0xFF0052FF),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: ReadableText(text: AppLocale.t('calculate')),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (result != null) ...[
+              const SizedBox(height: 20),
+              _ResultCard(rows: _resultRows(result)),
+              const SizedBox(height: 12),
+              ReadableText(
+                text:
+                    '${AppLocale.t('fan_coil_unit_loads')}: qc=${result.qc.toStringAsFixed(0)} W/m², qh=${result.qh.toStringAsFixed(0)} W/m²',
+                style: const TextStyle(color: Colors.grey),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum FanCoilPipeType {
+  twoPipe,
+  fourPipe,
+}
+
+enum FanCoilCalculationMode {
+  cooling,
+  heating,
+  both,
 }
 
 class RecirculationPumpTab extends StatefulWidget {
