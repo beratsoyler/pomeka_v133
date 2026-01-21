@@ -82,6 +82,18 @@ class FormulaRegistry {
       ),
     ),
     FormulaMeta(
+      id: 'pipe_diameter',
+      titleKey: 'pipe_diameter',
+      categoryId: categoryWater,
+      icon: Icons.straighten,
+      tags: const ['pipe', 'diameter', 'flow', 'capacity', 'water'],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'pipe_diameter',
+        titleKey: 'pipe_diameter',
+        child: PipeDiameterTab(),
+      ),
+    ),
+    FormulaMeta(
       id: 'recirculation_pump',
       titleKey: 'recirculation_pump',
       categoryId: categoryPumps,

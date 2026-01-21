@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -552,6 +554,676 @@ class _UnitConverterTabState extends State<UnitConverterTab> {
           ),
         ],
       ),
+    );
+  }
+}
+
+enum PipeDiameterMode {
+  capacity,
+  flow,
+  diameter,
+}
+
+enum PipeCapacityUnit {
+  kw,
+  kcalH,
+}
+
+enum PipeFlowUnit {
+  m3h,
+  lh,
+}
+
+class PipeDiameterTab extends StatefulWidget {
+  const PipeDiameterTab({super.key});
+
+  @override
+  State<PipeDiameterTab> createState() => _PipeDiameterTabState();
+}
+
+class _PipeDiameterTabState extends State<PipeDiameterTab> {
+  static const double _kwToKcalH = 860;
+  static const double _m3ToL = 1000;
+  static const double _hourToSecond = 3600;
+
+  final TextEditingController _deltaTCtrl = TextEditingController();
+  final TextEditingController _velocityCtrl = TextEditingController();
+  final TextEditingController _capacityCtrl = TextEditingController();
+  final TextEditingController _flowCtrl = TextEditingController();
+  final TextEditingController _diameterCtrl = TextEditingController();
+
+  final TextEditingController _waterDiameterCtrl = TextEditingController();
+  final TextEditingController _waterLengthCtrl = TextEditingController();
+
+  PipeDiameterMode _mode = PipeDiameterMode.capacity;
+  PipeCapacityUnit _capacityUnit = PipeCapacityUnit.kw;
+  PipeFlowUnit _flowUnit = PipeFlowUnit.m3h;
+
+  double? _diameterMm;
+  double? _flowM3h;
+  double? _flowLh;
+  double? _flowLs;
+  double? _capacityKcalH;
+  double? _capacityKw;
+
+  double? _waterVolumeM3;
+  double? _waterVolumeL;
+
+  @override
+  void initState() {
+    super.initState();
+    _deltaTCtrl.text = '20';
+    _velocityCtrl.text = '0.7';
+  }
+
+  @override
+  void dispose() {
+    _deltaTCtrl.dispose();
+    _velocityCtrl.dispose();
+    _capacityCtrl.dispose();
+    _flowCtrl.dispose();
+    _diameterCtrl.dispose();
+    _waterDiameterCtrl.dispose();
+    _waterLengthCtrl.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  double? _parsePositiveValue(TextEditingController controller, String labelKey,
+      {String? errorKey}) {
+    final label = AppLocale.t(labelKey);
+    final text = controller.text.trim();
+    if (text.isEmpty) {
+      _showError('$label ${AppLocale.t('err_required')}');
+      return null;
+    }
+    final value = double.tryParse(text.replaceAll(',', '.'));
+    if (value == null) {
+      _showError('$label: ${AppLocale.t('err_invalid_number')}');
+      return null;
+    }
+    if (value <= 0) {
+      final errorMessage = errorKey != null
+          ? AppLocale.t(errorKey)
+          : AppLocale.t('err_positive_value');
+      _showError(errorKey != null ? errorMessage : '$label $errorMessage');
+      return null;
+    }
+    return value;
+  }
+
+  double? _readDeltaT() {
+    return _parsePositiveValue(_deltaTCtrl, 'delta_t',
+        errorKey: 'err_delta_t');
+  }
+
+  double? _readVelocity() {
+    return _parsePositiveValue(_velocityCtrl, 'pipe_velocity');
+  }
+
+  void _clear() {
+    setState(() {
+      _deltaTCtrl.text = '20';
+      _velocityCtrl.text = '0.7';
+      _capacityCtrl.clear();
+      _flowCtrl.clear();
+      _diameterCtrl.clear();
+      _mode = PipeDiameterMode.capacity;
+      _capacityUnit = PipeCapacityUnit.kw;
+      _flowUnit = PipeFlowUnit.m3h;
+      _clearResults();
+    });
+  }
+
+  void _clearResults() {
+    _diameterMm = null;
+    _flowM3h = null;
+    _flowLh = null;
+    _flowLs = null;
+    _capacityKcalH = null;
+    _capacityKw = null;
+  }
+
+  void _clearWaterVolume() {
+    setState(() {
+      _waterDiameterCtrl.clear();
+      _waterLengthCtrl.clear();
+      _waterVolumeM3 = null;
+      _waterVolumeL = null;
+    });
+  }
+
+  Future<void> _calculate() async {
+    final deltaT = _readDeltaT();
+    if (deltaT == null) return;
+    final velocity = _readVelocity();
+    if (velocity == null) return;
+
+    double diameterMm;
+    double flowM3h;
+    double flowLh;
+    double flowLs;
+    double capacityKcalH;
+    double capacityKw;
+
+    String inputLabel;
+    String inputValue;
+
+    switch (_mode) {
+      case PipeDiameterMode.capacity:
+        final capacityValue =
+            _parsePositiveValue(_capacityCtrl, 'pipe_capacity');
+        if (capacityValue == null) return;
+        if (_capacityUnit == PipeCapacityUnit.kw) {
+          capacityKw = capacityValue;
+          capacityKcalH = capacityKw * _kwToKcalH;
+        } else {
+          capacityKcalH = capacityValue;
+          capacityKw = capacityKcalH / _kwToKcalH;
+        }
+        flowLh = capacityKcalH / deltaT;
+        flowM3h = flowLh / _m3ToL;
+        final flowM3s = flowM3h / _hourToSecond;
+        flowLs = flowM3s * _m3ToL;
+        diameterMm =
+            math.sqrt(4 * flowM3s / (math.pi * velocity)) * _m3ToL;
+        inputLabel = AppLocale.t('pipe_capacity');
+        inputValue =
+            '${capacityValue.toStringAsFixed(2)} ${_capacityUnitLabel(_capacityUnit)}';
+        break;
+      case PipeDiameterMode.flow:
+        final flowValue = _parsePositiveValue(_flowCtrl, 'pipe_flow');
+        if (flowValue == null) return;
+        if (_flowUnit == PipeFlowUnit.m3h) {
+          flowM3h = flowValue;
+          flowLh = flowM3h * _m3ToL;
+        } else {
+          flowLh = flowValue;
+          flowM3h = flowLh / _m3ToL;
+        }
+        final flowM3s = flowM3h / _hourToSecond;
+        flowLs = flowM3s * _m3ToL;
+        diameterMm =
+            math.sqrt(4 * flowM3s / (math.pi * velocity)) * _m3ToL;
+        capacityKcalH = flowLh * deltaT;
+        capacityKw = capacityKcalH / _kwToKcalH;
+        inputLabel = AppLocale.t('pipe_flow');
+        inputValue =
+            '${flowValue.toStringAsFixed(2)} ${_flowUnitLabel(_flowUnit)}';
+        break;
+      case PipeDiameterMode.diameter:
+        final diameterValue =
+            _parsePositiveValue(_diameterCtrl, 'pipe_diameter_input');
+        if (diameterValue == null) return;
+        diameterMm = diameterValue;
+        final diameterM = diameterMm / _m3ToL;
+        final flowM3s =
+            velocity * math.pi * math.pow(diameterM / 2, 2).toDouble();
+        flowM3h = flowM3s * _hourToSecond;
+        flowLh = flowM3h * _m3ToL;
+        flowLs = flowM3s * _m3ToL;
+        capacityKcalH = flowLh * deltaT;
+        capacityKw = capacityKcalH / _kwToKcalH;
+        inputLabel = AppLocale.t('pipe_diameter_input');
+        inputValue = '${diameterValue.toStringAsFixed(1)} mm';
+        break;
+    }
+
+    setState(() {
+      _diameterMm = diameterMm;
+      _flowM3h = flowM3h;
+      _flowLh = flowLh;
+      _flowLs = flowLs;
+      _capacityKcalH = capacityKcalH;
+      _capacityKw = capacityKw;
+    });
+
+    final createdAt = DateTime.now();
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'pipe_diameter',
+        formulaName: AppLocale.t('pipe_diameter'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('pipe_diameter_mode'): _modeLabel(_mode),
+          AppLocale.t('delta_t'): '${deltaT.toStringAsFixed(2)} °C',
+          AppLocale.t('pipe_velocity'): '${velocity.toStringAsFixed(2)} m/s',
+          inputLabel: inputValue,
+        },
+        outputs: {
+          AppLocale.t('pipe_result_diameter'):
+              '${diameterMm.toStringAsFixed(1)} mm',
+          AppLocale.t('pipe_result_flow_m3h'):
+              '${flowM3h.toStringAsFixed(2)} m³/h',
+          AppLocale.t('pipe_result_flow_lh'): '${flowLh.toStringAsFixed(0)} L/h',
+          AppLocale.t('pipe_result_capacity_kw'):
+              '${capacityKw.toStringAsFixed(2)} kW',
+        },
+      ),
+    );
+  }
+
+  void _calculateWaterVolume() {
+    final diameterValue =
+        _parsePositiveValue(_waterDiameterCtrl, 'pipe_diameter_input');
+    if (diameterValue == null) return;
+    final lengthValue = _parsePositiveValue(_waterLengthCtrl, 'pipe_length');
+    if (lengthValue == null) return;
+
+    final diameterM = diameterValue / _m3ToL;
+    final volumeM3 =
+        math.pi * math.pow(diameterM / 2, 2).toDouble() * lengthValue;
+    final volumeL = volumeM3 * _m3ToL;
+
+    setState(() {
+      _waterVolumeM3 = volumeM3;
+      _waterVolumeL = volumeL;
+    });
+  }
+
+  String _capacityUnitLabel(PipeCapacityUnit unit) {
+    switch (unit) {
+      case PipeCapacityUnit.kw:
+        return 'kW';
+      case PipeCapacityUnit.kcalH:
+        return 'kcal/h';
+    }
+  }
+
+  String _flowUnitLabel(PipeFlowUnit unit) {
+    switch (unit) {
+      case PipeFlowUnit.m3h:
+        return 'm³/h';
+      case PipeFlowUnit.lh:
+        return 'L/h';
+    }
+  }
+
+  String _modeLabel(PipeDiameterMode mode) {
+    switch (mode) {
+      case PipeDiameterMode.capacity:
+        return AppLocale.t('pipe_mode_capacity');
+      case PipeDiameterMode.flow:
+        return AppLocale.t('pipe_mode_flow');
+      case PipeDiameterMode.diameter:
+        return AppLocale.t('pipe_mode_diameter');
+    }
+  }
+
+  Widget _buildModeFields() {
+    switch (_mode) {
+      case PipeDiameterMode.capacity:
+        return Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: FocusLabelTextField(
+                controller: _capacityCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                labelText: AppLocale.t('pipe_capacity'),
+                labelWidget: TappableLabel(text: AppLocale.t('pipe_capacity')),
+                prefixIcon: const Icon(Icons.bolt),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DropdownButtonFormField<PipeCapacityUnit>(
+                value: _capacityUnit,
+                decoration: const InputDecoration(border: InputBorder.none),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _capacityUnit = value);
+                },
+                items: PipeCapacityUnit.values
+                    .map(
+                      (unit) => DropdownMenuItem(
+                        value: unit,
+                        child: Text(_capacityUnitLabel(unit)),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ],
+        );
+      case PipeDiameterMode.flow:
+        return Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: FocusLabelTextField(
+                controller: _flowCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                labelText: AppLocale.t('pipe_flow'),
+                labelWidget: TappableLabel(text: AppLocale.t('pipe_flow')),
+                prefixIcon: const Icon(Icons.water_drop_outlined),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: DropdownButtonFormField<PipeFlowUnit>(
+                value: _flowUnit,
+                decoration: const InputDecoration(border: InputBorder.none),
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _flowUnit = value);
+                },
+                items: PipeFlowUnit.values
+                    .map(
+                      (unit) => DropdownMenuItem(
+                        value: unit,
+                        child: Text(_flowUnitLabel(unit)),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ],
+        );
+      case PipeDiameterMode.diameter:
+        return FocusLabelTextField(
+          controller: _diameterCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          labelText: AppLocale.t('pipe_diameter_input'),
+          labelWidget: TappableLabel(text: AppLocale.t('pipe_diameter_input')),
+          prefixIcon: const Icon(Icons.straighten),
+          suffixText: 'mm',
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final resultVisible = _diameterMm != null &&
+        _flowM3h != null &&
+        _flowLh != null &&
+        _flowLs != null &&
+        _capacityKcalH != null &&
+        _capacityKw != null;
+    final waterResultVisible = _waterVolumeM3 != null && _waterVolumeL != null;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FocusLabelTextField(
+                    controller: _deltaTCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('delta_t'),
+                    labelWidget: TappableLabel(text: AppLocale.t('delta_t')),
+                    prefixIcon: const Icon(Icons.thermostat),
+                    suffixText: '°C',
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildDeltaChip(
+                        labelKey: 'pipe_delta_t_radiator',
+                        value: 20,
+                      ),
+                      _buildDeltaChip(
+                        labelKey: 'pipe_delta_t_floor',
+                        value: 10,
+                      ),
+                      _buildDeltaChip(
+                        labelKey: 'pipe_delta_t_cooling',
+                        value: 5,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _velocityCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('pipe_velocity'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('pipe_velocity')),
+                    prefixIcon: const Icon(Icons.speed),
+                    suffixText: 'm/s',
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<PipeDiameterMode>(
+                    value: _mode,
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('pipe_diameter_mode'),
+                    ),
+                    items: PipeDiameterMode.values
+                        .map(
+                          (mode) => DropdownMenuItem(
+                            value: mode,
+                            child: Text(_modeLabel(mode)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() {
+                        _mode = value;
+                        _clearResults();
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildModeFields(),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _clear,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('clean')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _calculate,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            backgroundColor: const Color(0xFF0052FF),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('calculate')),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (resultVisible) ...[
+            const SizedBox(height: 20),
+            _ResultCard(
+              rows: [
+                _ResultRow(
+                  label: AppLocale.t('pipe_result_diameter'),
+                  value: '${_diameterMm!.toStringAsFixed(1)} mm',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('pipe_result_flow_m3h'),
+                  value: '${_flowM3h!.toStringAsFixed(2)} m³/h',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('pipe_result_flow_lh'),
+                  value: '${_flowLh!.toStringAsFixed(0)} L/h',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('pipe_result_flow_ls'),
+                  value: '${_flowLs!.toStringAsFixed(2)} L/s',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('pipe_result_capacity_kcalh'),
+                  value: '${_capacityKcalH!.toStringAsFixed(0)} kcal/h',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('pipe_result_capacity_kw'),
+                  value: '${_capacityKw!.toStringAsFixed(2)} kW',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.picture_as_pdf),
+              label: ReadableText(text: AppLocale.t('share_pdf')),
+              onPressed: () => PdfReportService.generateSingleReport(
+                formulaName: AppLocale.t('pipe_diameter'),
+                inputs: {
+                  AppLocale.t('pipe_diameter_mode'): _modeLabel(_mode),
+                  AppLocale.t('delta_t'): '${_deltaTCtrl.text} °C',
+                  AppLocale.t('pipe_velocity'): '${_velocityCtrl.text} m/s',
+                  if (_mode == PipeDiameterMode.capacity)
+                    AppLocale.t('pipe_capacity'):
+                        '${_capacityCtrl.text} ${_capacityUnitLabel(_capacityUnit)}',
+                  if (_mode == PipeDiameterMode.flow)
+                    AppLocale.t('pipe_flow'):
+                        '${_flowCtrl.text} ${_flowUnitLabel(_flowUnit)}',
+                  if (_mode == PipeDiameterMode.diameter)
+                    AppLocale.t('pipe_diameter_input'):
+                        '${_diameterCtrl.text} mm',
+                },
+                outputs: {
+                  AppLocale.t('pipe_result_diameter'):
+                      '${_diameterMm!.toStringAsFixed(1)} mm',
+                  AppLocale.t('pipe_result_flow_m3h'):
+                      '${_flowM3h!.toStringAsFixed(2)} m³/h',
+                  AppLocale.t('pipe_result_flow_lh'):
+                      '${_flowLh!.toStringAsFixed(0)} L/h',
+                  AppLocale.t('pipe_result_capacity_kw'):
+                      '${_capacityKw!.toStringAsFixed(2)} kW',
+                },
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ReadableText(
+                    text: AppLocale.t('pipe_water_volume_title'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _waterDiameterCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('pipe_diameter_input'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('pipe_diameter_input')),
+                    prefixIcon: const Icon(Icons.straighten),
+                    suffixText: 'mm',
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _waterLengthCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('pipe_length'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('pipe_length')),
+                    prefixIcon: const Icon(Icons.straighten),
+                    suffixText: 'm',
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _clearWaterVolume,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('clean')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _calculateWaterVolume,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            backgroundColor: const Color(0xFF0052FF),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('calculate')),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (waterResultVisible) ...[
+                    const SizedBox(height: 16),
+                    _ResultCard(
+                      rows: [
+                        _ResultRow(
+                          label: AppLocale.t('pipe_water_volume_m3'),
+                          value: '${_waterVolumeM3!.toStringAsFixed(4)} m³',
+                        ),
+                        _ResultRow(
+                          label: AppLocale.t('pipe_water_volume_l'),
+                          value: '${_waterVolumeL!.toStringAsFixed(2)} L',
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeltaChip({required String labelKey, required double value}) {
+    final currentValue = double.tryParse(_deltaTCtrl.text.replaceAll(',', '.'));
+    final isSelected = currentValue != null && currentValue == value;
+    return ChoiceChip(
+      label: Text(AppLocale.t(labelKey)),
+      selected: isSelected,
+      onSelected: (_) {
+        setState(() => _deltaTCtrl.text = value.toStringAsFixed(0));
+      },
     );
   }
 }
