@@ -3377,6 +3377,8 @@ class HistoryScreen extends StatefulWidget {
   State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
+enum _HistoryMenuAction { deleteAll }
+
 class _HistoryScreenState extends State<HistoryScreen> {
   List<CalculationHistoryRecord> _history = [];
   final Set<String> _selectedIds = {};
@@ -3486,6 +3488,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  void _handleMenuAction(_HistoryMenuAction action) {
+    if (action == _HistoryMenuAction.deleteAll) {
+      _showDeleteAllDialog();
+    }
+  }
+
   String _formatDateTime(DateTime time) {
     final y = time.year.toString().padLeft(4, '0');
     final m = time.month.toString().padLeft(2, '0');
@@ -3510,6 +3518,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final checkboxBorder = BorderSide(
+      color: Colors.grey.withValues(alpha: 0.5),
+      width: 1.2,
+    );
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -3537,17 +3550,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
             ),
-          IconButton(
-            icon: Icon(
-              _selectedIds.isNotEmpty ? Icons.close : Icons.delete_forever_outlined,
-              color: _selectedIds.isNotEmpty ? Colors.white70 : Colors.grey,
+          if (_selectedIds.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white70),
+              onPressed: _clearSelection,
+              tooltip: AppLocale.t('clear_selection'),
+            )
+          else
+            PopupMenuButton<_HistoryMenuAction>(
+              tooltip: AppLocale.t('clear_history'),
+              onSelected: _handleMenuAction,
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _HistoryMenuAction.deleteAll,
+                  child: ReadableText(text: AppLocale.t('clear_history')),
+                ),
+              ],
             ),
-            onPressed:
-                _selectedIds.isNotEmpty ? _clearSelection : _showDeleteAllDialog,
-            tooltip: _selectedIds.isNotEmpty
-                ? AppLocale.t('clear_selection')
-                : AppLocale.t('clear_history'),
-          ),
         ],
       ),
       floatingActionButton: _selectedIds.isEmpty
@@ -3610,16 +3629,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(right: 12),
-                          child: Transform.scale(
-                            scale: 1.1,
-                            child: Checkbox(
-                              value: isSelected,
-                              activeColor: const Color(0xFF0052FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              onChanged: (_) => _toggleSelection(record),
+                          child: Checkbox(
+                            value: isSelected,
+                            activeColor: const Color(0xFF0052FF),
+                            side: checkboxBorder,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity:
+                                const VisualDensity(horizontal: -2, vertical: -2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
                             ),
+                            onChanged: (_) => _toggleSelection(record),
                           ),
                         ),
                         Expanded(
