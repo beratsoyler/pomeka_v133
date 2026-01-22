@@ -358,7 +358,7 @@ class _AssistantCard extends StatelessWidget {
                       width: iconSize,
                       height: iconSize,
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
+                        color: color.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(Icons.support_agent, color: color),

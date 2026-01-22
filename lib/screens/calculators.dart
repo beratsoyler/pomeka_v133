@@ -92,7 +92,7 @@ class ResultChart extends StatelessWidget {
                   barWidth: 3,
                   dotData: const FlDotData(show: false),
                   belowBarData: BarAreaData(
-                      show: true, color: lineColor.withValues(alpha: 0.1)),
+                      show: true, color: lineColor.withOpacity(0.1)),
                 ),
                 LineChartBarData(
                   spots: [FlSpot(q, hm)],
@@ -214,7 +214,7 @@ class BoilerChart extends StatelessWidget {
                         dotData: const FlDotData(show: false),
                         belowBarData: BarAreaData(
                             show: true,
-                            color: lineColor.withValues(alpha: 0.1)),
+                            color: lineColor.withOpacity(0.1)),
                       ),
                     ],
                     lineTouchData: LineTouchData(
@@ -326,7 +326,7 @@ class TankChart extends StatelessWidget {
                         dotData: const FlDotData(show: false),
                         belowBarData: BarAreaData(
                             show: true,
-                            color: lineColor.withValues(alpha: 0.1)),
+                            color: lineColor.withOpacity(0.1)),
                       ),
                     ],
                     lineTouchData: LineTouchData(
@@ -436,7 +436,7 @@ class _UnitConverterTabState extends State<UnitConverterTab> {
     final iconColor = isDark ? Colors.white : Theme.of(context).primaryColor;
     final borderColor = isDark
         ? Colors.white24
-        : Theme.of(context).primaryColor.withValues(alpha: 0.2);
+        : Theme.of(context).primaryColor.withOpacity(0.2);
     final textColor = isDark ? Colors.white : Colors.black87;
 
     return SingleChildScrollView(
@@ -523,7 +523,7 @@ class _UnitConverterTabState extends State<UnitConverterTab> {
                           decoration: BoxDecoration(
                               color: Theme.of(context)
                                   .primaryColor
-                                  .withValues(alpha: 0.1),
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12)),
                           child: Text(
                               _result == 0 ? "0" : _result.toStringAsFixed(4),
@@ -1785,7 +1785,7 @@ class _BoilerResultCard extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF0052FF), width: 2),
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFF0052FF).withValues(alpha: 0.05),
+        color: const Color(0xFF0052FF).withOpacity(0.05),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2008,7 +2008,7 @@ class _BoilerTabState extends State<BoilerTab> {
                       color: _isError ? Colors.red : const Color(0xFF0052FF),
                       width: 2),
                   borderRadius: BorderRadius.circular(20),
-                  color: _isError ? Colors.red.withValues(alpha: 0.1) : null),
+                  color: _isError ? Colors.red.withOpacity(0.1) : null),
               child: Column(children: [
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Icon(
@@ -4561,7 +4561,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final checkboxBorder = BorderSide(
-      color: Colors.grey.withValues(alpha: 0.5),
+      color: Colors.grey.withOpacity(0.5),
       width: 1.2,
     );
 
@@ -4587,7 +4587,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                   backgroundColor: const Color(0xFF0052FF),
                   side: BorderSide(
-                    color: const Color(0xFF0052FF).withValues(alpha: 0.6),
+                    color: const Color(0xFF0052FF).withOpacity(0.6),
                   ),
                 ),
               ),
@@ -4653,14 +4653,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   color: isSelected
-                      ? const Color(0xFF0052FF).withValues(alpha: 0.08)
+                      ? const Color(0xFF0052FF).withOpacity(0.08)
                       : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
                       color: isSelected
                           ? const Color(0xFF0052FF)
-                          : Colors.grey.withValues(alpha: 0.2),
+                          : Colors.grey.withOpacity(0.2),
                       width: isSelected ? 2 : 1,
                     ),
                   ),

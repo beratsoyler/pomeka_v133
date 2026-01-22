@@ -125,12 +125,13 @@ class _FocusLabelTextFieldState extends State<FocusLabelTextField> {
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                    color: theme.colorScheme.primary.withOpacity(0.25),
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(
-                          alpha: theme.brightness == Brightness.dark ? 0.2 : 0.12),
+                      color: Colors.black.withOpacity(
+                        theme.brightness == Brightness.dark ? 0.2 : 0.12,
+                      ),
                       blurRadius: 10,
                       offset: const Offset(0, 6),
                     ),
@@ -165,8 +166,8 @@ class _FocusLabelTextFieldState extends State<FocusLabelTextField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isFocused = _focusNode.hasFocus;
-    final focusColor = theme.colorScheme.primary.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.14 : 0.08,
+    final focusColor = theme.colorScheme.primary.withOpacity(
+      theme.brightness == Brightness.dark ? 0.14 : 0.08,
     );
 
     return AnimatedContainer(
@@ -177,7 +178,7 @@ class _FocusLabelTextFieldState extends State<FocusLabelTextField> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isFocused
-              ? theme.colorScheme.primary.withValues(alpha: 0.5)
+              ? theme.colorScheme.primary.withOpacity(0.5)
               : Colors.transparent,
           width: 1,
         ),
