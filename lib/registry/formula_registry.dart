@@ -154,6 +154,26 @@ class FormulaRegistry {
       ),
     ),
     FormulaMeta(
+      id: 'practical_floor_heating',
+      titleKey: 'practical_floor_heating',
+      categoryId: categoryHeating,
+      icon: Icons.view_week,
+      tags: const [
+        'floor',
+        'heating',
+        'underfloor',
+        'pipe',
+        'collector',
+        'kW',
+        'kcal'
+      ],
+      builder: (context) => const FormulaScreen(
+        formulaId: 'practical_floor_heating',
+        titleKey: 'practical_floor_heating',
+        child: PracticalFloorHeatingTab(),
+      ),
+    ),
+    FormulaMeta(
       id: 'tank',
       titleKey: 'tank',
       categoryId: categoryHeating,
