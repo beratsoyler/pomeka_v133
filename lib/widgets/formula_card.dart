@@ -74,7 +74,7 @@ class FormulaCard extends StatelessWidget {
                       width: iconSize,
                       height: iconSize,
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
+                        color: color.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Center(child: iconWidget),

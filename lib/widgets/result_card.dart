@@ -14,7 +14,7 @@ class ResultCard extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFF0052FF), width: 2),
         borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFF0052FF).withValues(alpha: 0.05),
+        color: const Color(0xFF0052FF).withOpacity(0.05),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
