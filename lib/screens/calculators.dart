@@ -15,6 +15,7 @@ import '../services/pump_expansion_calculator.dart';
 import '../state/app_state.dart';
 import '../widgets/focus_label_text_field.dart';
 import '../widgets/readable_text.dart';
+import '../widgets/result_card.dart';
 import '../widgets/tappable_label.dart';
 // ---------------------------------------------------------------------------
 // 1. CHART WIDGETS
@@ -1062,29 +1063,29 @@ class _PipeDiameterTabState extends State<PipeDiameterTab> {
           ),
           if (resultVisible) ...[
             const SizedBox(height: 20),
-            _ResultCard(
+            ResultCard(
               rows: [
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('pipe_result_diameter'),
                   value: '${_diameterMm!.toStringAsFixed(1)} mm',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('pipe_result_flow_m3h'),
                   value: '${_flowM3h!.toStringAsFixed(2)} m³/h',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('pipe_result_flow_lh'),
                   value: '${_flowLh!.toStringAsFixed(0)} L/h',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('pipe_result_flow_ls'),
                   value: '${_flowLs!.toStringAsFixed(2)} L/s',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('pipe_result_capacity_kcalh'),
                   value: '${_capacityKcalH!.toStringAsFixed(0)} kcal/h',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('pipe_result_capacity_kw'),
                   value: '${_capacityKw!.toStringAsFixed(2)} kW',
                 ),
@@ -1193,13 +1194,13 @@ class _PipeDiameterTabState extends State<PipeDiameterTab> {
                   ),
                   if (waterResultVisible) ...[
                     const SizedBox(height: 16),
-                    _ResultCard(
+                    ResultCard(
                       rows: [
-                        _ResultRow(
+                        ResultRow(
                           label: AppLocale.t('pipe_water_volume_m3'),
                           value: '${_waterVolumeM3!.toStringAsFixed(4)} m³',
                         ),
-                        _ResultRow(
+                        ResultRow(
                           label: AppLocale.t('pipe_water_volume_l'),
                           value: '${_waterVolumeL!.toStringAsFixed(2)} L',
                         ),
@@ -2561,18 +2562,18 @@ class _FanCoilTabState extends State<FanCoilTab> {
     ];
   }
 
-  List<_ResultRow> _resultRows(FanCoilResult result) {
-    final rows = <_ResultRow>[];
+  List<ResultRow> _resultRows(FanCoilResult result) {
+    final rows = <ResultRow>[];
     if (_calcMode == FanCoilCalculationMode.cooling ||
         _calcMode == FanCoilCalculationMode.both) {
-      rows.add(_ResultRow(
+      rows.add(ResultRow(
         label: AppLocale.t('fan_coil_cooling_capacity'),
         value: '${result.qCoolKw.toStringAsFixed(2)} kW',
       ));
     }
     if (_calcMode == FanCoilCalculationMode.heating ||
         _calcMode == FanCoilCalculationMode.both) {
-      rows.add(_ResultRow(
+      rows.add(ResultRow(
         label: AppLocale.t('fan_coil_heating_capacity'),
         value: '${result.qHeatKw.toStringAsFixed(2)} kW',
       ));
@@ -2702,7 +2703,7 @@ class _FanCoilTabState extends State<FanCoilTab> {
             ),
             if (result != null) ...[
               const SizedBox(height: 20),
-              _ResultCard(rows: _resultRows(result)),
+              ResultCard(rows: _resultRows(result)),
               const SizedBox(height: 12),
               ReadableText(
                 text:
@@ -3113,37 +3114,37 @@ class _PracticalFloorHeatingTabState extends State<PracticalFloorHeatingTab> {
           ),
           if (_result != null) ...[
             const SizedBox(height: 20),
-            _ResultCard(
+            ResultCard(
               rows: [
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_pipe_length'),
                   value: '${_result!.pipeLength.toStringAsFixed(2)} m',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_capacity_kw'),
                   value: '${_result!.capacityKw.toStringAsFixed(2)} kW',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_avg_heat'),
                   value: '${_result!.averageHeatWm2.toStringAsFixed(2)} W/m²',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_total_heat_w'),
                   value: '${_result!.totalW.toStringAsFixed(2)} W',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_total_heat_kcalh'),
                   value: '${_result!.totalKcalH.toStringAsFixed(2)} kcal/h',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_required_ports'),
                   value: _result!.requiredPorts.toStringAsFixed(2),
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_collector_count'),
                   value: _result!.collectorCount.toString(),
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('floor_heating_collector_ports_per'),
                   value: _result!.collectorPorts.toString(),
                 ),
@@ -3347,17 +3348,17 @@ class _RecirculationPumpTabState extends State<RecirculationPumpTab> {
           ),
           if (resultVisible) ...[
             const SizedBox(height: 20),
-            _ResultCard(
+            ResultCard(
               rows: [
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('recirc_heat_loss'),
                   value: '${_heatLossW!.toStringAsFixed(2)} W',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('recirc_required_flow_lh'),
                   value: '${_flowLh!.toStringAsFixed(2)} L/h',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('recirc_required_flow_m3h'),
                   value: '${_flowM3h!.toStringAsFixed(2)} m³/h',
                 ),
@@ -3750,23 +3751,23 @@ class _CirculationPumpTabState extends State<CirculationPumpTab> {
           ),
           if (resultVisible) ...[
             const SizedBox(height: 20),
-            _ResultCard(
+            ResultCard(
               rows: [
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('circulation_flow'),
                   value: '${_flow!.toStringAsFixed(3)} m³/h',
                 ),
                 if (_applySafety && _flowSafe != null)
-                  _ResultRow(
+                  ResultRow(
                     label: AppLocale.t('circulation_flow_safe'),
                     value: '${_flowSafe!.toStringAsFixed(3)} m³/h',
                   ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('circulation_head'),
                   value: '${_head!.toStringAsFixed(3)} mSS',
                 ),
                 if (_applySafety && _headSafe != null)
-                  _ResultRow(
+                  ResultRow(
                     label: AppLocale.t('circulation_head_safe'),
                     value: '${_headSafe!.toStringAsFixed(3)} mSS',
                   ),
@@ -4095,13 +4096,13 @@ class _ShuntPumpTabState extends State<ShuntPumpTab> {
           ),
           if (resultVisible) ...[
             const SizedBox(height: 20),
-            _ResultCard(
+            ResultCard(
               rows: [
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('shunt_flow'),
                   value: '${_flowM3h!.toStringAsFixed(2)} m³/h',
                 ),
-                _ResultRow(
+                ResultRow(
                   label: AppLocale.t('shunt_head'),
                   value: '${_headMss!.toStringAsFixed(2)} mSS',
                 ),
@@ -4141,60 +4142,6 @@ class _ShuntHeatingOption {
   final bool isFloorHeating;
 
   const _ShuntHeatingOption(this.labelKey, this.isFloorHeating);
-}
-
-class _ResultCard extends StatelessWidget {
-  final List<_ResultRow> rows;
-
-  const _ResultCard({required this.rows});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF0052FF), width: 2),
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFF0052FF).withValues(alpha: 0.05),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: rows
-            .expand((row) => [row, const SizedBox(height: 12)])
-            .toList()
-          ..removeLast(),
-      ),
-    );
-  }
-}
-
-class _ResultRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _ResultRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final valueStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: const Color(0xFF0052FF),
-        );
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: TappableLabel(
-            text: label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Text(value, style: valueStyle),
-      ],
-    );
-  }
 }
 
 class BoilerExpansionTankTab extends StatefulWidget {
