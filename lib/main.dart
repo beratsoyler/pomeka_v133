@@ -90,7 +90,7 @@ class _PomekaAppState extends State<PomekaApp> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: isD
-              ? BorderSide(color: Colors.white.withValues(alpha: 0.08))
+              ? BorderSide(color: Colors.white.withOpacity(0.08))
               : BorderSide.none,
         ),
       ),
@@ -169,8 +169,8 @@ class _SplashScreenState extends State<SplashScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0052FF).withValues(
-                                alpha: 0.2 * _opacityAnimation.value),
+                            color: const Color(0xFF0052FF)
+                                .withOpacity(0.2 * _opacityAnimation.value),
                             blurRadius: 30,
                             spreadRadius: 10,
                           )
