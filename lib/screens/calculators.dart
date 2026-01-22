@@ -2755,6 +2755,429 @@ enum FanCoilCalculationMode {
   both,
 }
 
+enum PracticalFloorHeatingModulation {
+  tight,
+  normal,
+  wide,
+}
+
+class PracticalFloorHeatingTab extends StatefulWidget {
+  const PracticalFloorHeatingTab({super.key});
+
+  @override
+  State<PracticalFloorHeatingTab> createState() =>
+      _PracticalFloorHeatingTabState();
+}
+
+class _PracticalFloorHeatingTabState extends State<PracticalFloorHeatingTab> {
+  final TextEditingController _areaCtrl = TextEditingController();
+  final TextEditingController _screedCtrl = TextEditingController();
+  final TextEditingController _maxLengthCtrl = TextEditingController();
+  final TextEditingController _collectorPortsCtrl = TextEditingController();
+
+  PracticalFloorHeatingModulation _modulation =
+      PracticalFloorHeatingModulation.tight;
+  int _pipeDiameter = 16;
+
+  _PracticalFloorHeatingResult? _result;
+
+  @override
+  void initState() {
+    super.initState();
+    _maxLengthCtrl.text = '80';
+  }
+
+  @override
+  void dispose() {
+    _areaCtrl.dispose();
+    _screedCtrl.dispose();
+    _maxLengthCtrl.dispose();
+    _collectorPortsCtrl.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  double? _readDouble(
+    TextEditingController controller,
+    String labelKey, {
+    bool allowZero = false,
+  }) {
+    final label = AppLocale.t(labelKey);
+    final text = controller.text.trim();
+    if (text.isEmpty) {
+      _showError('$label ${AppLocale.t('err_required')}');
+      return null;
+    }
+    final value = double.tryParse(text.replaceAll(',', '.'));
+    if (value == null) {
+      _showError('$label: ${AppLocale.t('err_invalid_number')}');
+      return null;
+    }
+    if (value < 0 || (!allowZero && value == 0)) {
+      final errorMessage = value < 0
+          ? AppLocale.t('err_negative')
+          : AppLocale.t('err_positive_value');
+      _showError('$label $errorMessage');
+      return null;
+    }
+    return value;
+  }
+
+  int? _readInt(TextEditingController controller, String labelKey) {
+    final label = AppLocale.t(labelKey);
+    final text = controller.text.trim();
+    if (text.isEmpty) {
+      _showError('$label ${AppLocale.t('err_required')}');
+      return null;
+    }
+    final value = int.tryParse(text);
+    if (value == null) {
+      _showError('$label: ${AppLocale.t('err_invalid_number')}');
+      return null;
+    }
+    if (value <= 0) {
+      _showError('$label ${AppLocale.t('err_positive_value')}');
+      return null;
+    }
+    return value;
+  }
+
+  void _clear() {
+    setState(() {
+      _areaCtrl.clear();
+      _screedCtrl.clear();
+      _maxLengthCtrl.text = '80';
+      _collectorPortsCtrl.clear();
+      _modulation = PracticalFloorHeatingModulation.tight;
+      _pipeDiameter = 16;
+      _result = null;
+    });
+  }
+
+  double _m2Pipe(PracticalFloorHeatingModulation modulation) {
+    switch (modulation) {
+      case PracticalFloorHeatingModulation.tight:
+        return 6.6;
+      case PracticalFloorHeatingModulation.normal:
+        return 4.4;
+      case PracticalFloorHeatingModulation.wide:
+        return 3.3;
+    }
+  }
+
+  double _spacingCm(PracticalFloorHeatingModulation modulation) {
+    switch (modulation) {
+      case PracticalFloorHeatingModulation.tight:
+        return 15;
+      case PracticalFloorHeatingModulation.normal:
+        return 22.5;
+      case PracticalFloorHeatingModulation.wide:
+        return 30;
+    }
+  }
+
+  Future<void> _calculate() async {
+    final area = _readDouble(_areaCtrl, 'floor_heating_area', allowZero: true);
+    if (area == null) return;
+    final screed = _readDouble(_screedCtrl, 'floor_heating_screed');
+    if (screed == null) return;
+    final maxLength = _readDouble(_maxLengthCtrl, 'floor_heating_max_length');
+    if (maxLength == null) return;
+    final collectorPorts =
+        _readInt(_collectorPortsCtrl, 'floor_heating_collector_ports');
+    if (collectorPorts == null) return;
+
+    final m2Pipe = _m2Pipe(_modulation);
+    final pipeLength = area * m2Pipe;
+    final capacityKw = _pipeDiameter == 16
+        ? (pipeLength * 11.87) / 1000
+        : (pipeLength * 12.5) / 1000;
+    final qWm2 = _pipeDiameter == 16
+        ? (12.84 * m2Pipe) - ((screed - 3) * 6.8)
+        : (13.57 * m2Pipe) - ((screed - 3) * 7.5);
+    final adjustedQWm2 = math.max(0, qWm2);
+    final totalW = adjustedQWm2 * area;
+    final totalKcalH = totalW * 0.859845;
+    final requiredPorts = maxLength == 0 ? 0 : pipeLength / maxLength;
+    final collectorCount = area > 0
+        ? math.max(1, (requiredPorts / collectorPorts).ceil())
+        : 0;
+
+    final result = _PracticalFloorHeatingResult(
+      pipeLength: pipeLength,
+      capacityKw: capacityKw,
+      averageHeatWm2: adjustedQWm2,
+      totalW: totalW,
+      totalKcalH: totalKcalH,
+      requiredPorts: requiredPorts,
+      collectorCount: collectorCount,
+      collectorPorts: collectorPorts,
+    );
+
+    setState(() {
+      _result = result;
+    });
+
+    final createdAt = DateTime.now();
+    await CalculationHistoryService.append(
+      CalculationHistoryRecord(
+        id: createdAt.microsecondsSinceEpoch.toString(),
+        formulaId: 'practical_floor_heating',
+        formulaName: AppLocale.t('practical_floor_heating'),
+        createdAt: createdAt,
+        inputs: {
+          AppLocale.t('floor_heating_area'): '${area.toStringAsFixed(2)} m²',
+          AppLocale.t('floor_heating_modulation'): _modulationLabel(_modulation),
+          AppLocale.t('floor_heating_pipe_diameter'):
+              '${_pipeDiameter.toStringAsFixed(0)} mm',
+          AppLocale.t('floor_heating_screed'):
+              '${screed.toStringAsFixed(2)} cm',
+          AppLocale.t('floor_heating_max_length'):
+              '${maxLength.toStringAsFixed(2)} m',
+          AppLocale.t('floor_heating_collector_ports'):
+              collectorPorts.toString(),
+        },
+        outputs: {
+          AppLocale.t('floor_heating_pipe_length'):
+              '${pipeLength.toStringAsFixed(2)} m',
+          AppLocale.t('floor_heating_capacity_kw'):
+              '${capacityKw.toStringAsFixed(2)} kW',
+          AppLocale.t('floor_heating_avg_heat'):
+              '${adjustedQWm2.toStringAsFixed(2)} W/m²',
+          AppLocale.t('floor_heating_total_heat_w'):
+              '${totalW.toStringAsFixed(2)} W',
+          AppLocale.t('floor_heating_total_heat_kcalh'):
+              '${totalKcalH.toStringAsFixed(2)} kcal/h',
+          AppLocale.t('floor_heating_required_ports'):
+              requiredPorts.toStringAsFixed(2),
+          AppLocale.t('floor_heating_collector_count'):
+              collectorCount.toString(),
+          AppLocale.t('floor_heating_collector_ports_per'):
+              collectorPorts.toString(),
+        },
+      ),
+    );
+  }
+
+  String _modulationLabel(PracticalFloorHeatingModulation modulation) {
+    switch (modulation) {
+      case PracticalFloorHeatingModulation.tight:
+        return AppLocale.t('floor_heating_modulation_tight');
+      case PracticalFloorHeatingModulation.normal:
+        return AppLocale.t('floor_heating_modulation_normal');
+      case PracticalFloorHeatingModulation.wide:
+        return AppLocale.t('floor_heating_modulation_wide');
+    }
+  }
+
+  String _spacingLabel(PracticalFloorHeatingModulation modulation) {
+    final spacing = _spacingCm(modulation);
+    if (spacing == spacing.roundToDouble()) {
+      return spacing.toStringAsFixed(0);
+    }
+    return spacing.toStringAsFixed(1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  FocusLabelTextField(
+                    controller: _areaCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('floor_heating_area'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('floor_heating_area')),
+                    prefixIcon: const Icon(Icons.square_foot),
+                    suffixText: 'm²',
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<PracticalFloorHeatingModulation>(
+                    value: _modulation,
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('floor_heating_modulation'),
+                    ),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _modulation = value);
+                    },
+                    items: PracticalFloorHeatingModulation.values
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item,
+                            child: Text(
+                                '${_modulationLabel(item)} (${_spacingLabel(item)} cm)'),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<int>(
+                    value: _pipeDiameter,
+                    decoration: InputDecoration(
+                      labelText: AppLocale.t('floor_heating_pipe_diameter'),
+                    ),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _pipeDiameter = value);
+                    },
+                    items: const [16, 17]
+                        .map(
+                          (diameter) => DropdownMenuItem(
+                            value: diameter,
+                            child: Text('$diameter mm'),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _screedCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('floor_heating_screed'),
+                    labelWidget:
+                        TappableLabel(text: AppLocale.t('floor_heating_screed')),
+                    prefixIcon: const Icon(Icons.layers),
+                    suffixText: 'cm',
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _maxLengthCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    labelText: AppLocale.t('floor_heating_max_length'),
+                    labelWidget: TappableLabel(
+                        text: AppLocale.t('floor_heating_max_length')),
+                    prefixIcon: const Icon(Icons.straighten),
+                    suffixText: 'm',
+                  ),
+                  const SizedBox(height: 16),
+                  FocusLabelTextField(
+                    controller: _collectorPortsCtrl,
+                    keyboardType: TextInputType.number,
+                    labelText: AppLocale.t('floor_heating_collector_ports'),
+                    labelWidget: TappableLabel(
+                        text: AppLocale.t('floor_heating_collector_ports')),
+                    prefixIcon: const Icon(Icons.format_list_numbered),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _clear,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('clean')),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _calculate,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52),
+                            backgroundColor: const Color(0xFF0052FF),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: ReadableText(text: AppLocale.t('calculate')),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_result != null) ...[
+            const SizedBox(height: 20),
+            _ResultCard(
+              rows: [
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_pipe_length'),
+                  value: '${_result!.pipeLength.toStringAsFixed(2)} m',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_capacity_kw'),
+                  value: '${_result!.capacityKw.toStringAsFixed(2)} kW',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_avg_heat'),
+                  value: '${_result!.averageHeatWm2.toStringAsFixed(2)} W/m²',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_total_heat_w'),
+                  value: '${_result!.totalW.toStringAsFixed(2)} W',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_total_heat_kcalh'),
+                  value: '${_result!.totalKcalH.toStringAsFixed(2)} kcal/h',
+                ),
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_required_ports'),
+                  value: _result!.requiredPorts.toStringAsFixed(2),
+                ),
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_collector_count'),
+                  value: _result!.collectorCount.toString(),
+                ),
+                _ResultRow(
+                  label: AppLocale.t('floor_heating_collector_ports_per'),
+                  value: _result!.collectorPorts.toString(),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PracticalFloorHeatingResult {
+  final double pipeLength;
+  final double capacityKw;
+  final double averageHeatWm2;
+  final double totalW;
+  final double totalKcalH;
+  final double requiredPorts;
+  final int collectorCount;
+  final int collectorPorts;
+
+  const _PracticalFloorHeatingResult({
+    required this.pipeLength,
+    required this.capacityKw,
+    required this.averageHeatWm2,
+    required this.totalW,
+    required this.totalKcalH,
+    required this.requiredPorts,
+    required this.collectorCount,
+    required this.collectorPorts,
+  });
+}
+
 class RecirculationPumpTab extends StatefulWidget {
   const RecirculationPumpTab({super.key});
 
